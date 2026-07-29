@@ -215,8 +215,16 @@ img{ max-width: 100%; }
 }
 
 .deskbar{ display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
-.whoami{ display: flex; flex-direction: column; gap: 2px; }
-.whoami .who{ font-weight: 600; font-size: 0.875rem; }
+.trainer-pick{ display: flex; flex-direction: column; gap: 4px; }
+.trainer-pick select{
+  background: var(--sleeve);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 8px 10px;
+  min-width: 190px;
+  font-weight: 600;
+  box-shadow: var(--shadow-lo);
+}
 .deskbar .sep{
   width: 1px;
   align-self: stretch;
@@ -262,69 +270,6 @@ img{ max-width: 100%; }
 }
 .txt:hover{ border-color: var(--ink-3); }
 .txt[aria-invalid="true"]{ border-color: var(--accent); border-width: 2px; }
-
-/* ═══════════════ auth gate ═══════════════ */
-.gate{
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-}
-.gate-card{
-  width: 100%;
-  max-width: 390px;
-  background: var(--sleeve);
-  border: 1px solid var(--rule);
-  border-top: 4px solid var(--accent);
-  border-radius: 3px;
-  box-shadow: var(--shadow-hi);
-  padding: 26px 24px 24px;
-}
-.gate-brand{ display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
-.gate-brand h1{ font-size: 1.375rem; }
-.gate-sub{
-  font-family: var(--mono);
-  font-size: 0.6875rem;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-  margin: 0 0 18px;
-}
-.gate-toggle{
-  display: flex;
-  border: 1px solid var(--rule);
-  border-radius: 3px;
-  overflow: hidden;
-  margin-bottom: 18px;
-  box-shadow: var(--shadow-lo);
-}
-.gate-toggle button{
-  flex: 1;
-  background: var(--sleeve);
-  border: 0;
-  padding: 9px 12px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--ink-2);
-}
-.gate-toggle button + button{ border-left: 1px solid var(--rule); }
-.gate-toggle button:hover{ background: var(--sleeve-2); color: var(--ink); }
-.gate-toggle button[aria-pressed="true"]{ background: var(--ink); color: var(--page); }
-.gate-note{
-  font-size: 0.75rem;
-  color: var(--ink-2);
-  margin: 14px 0 0;
-  line-height: 1.5;
-}
-.gate-note code{
-  font-family: var(--mono);
-  font-size: 0.6875rem;
-  background: var(--sleeve-2);
-  border: 1px solid var(--rule-soft);
-  border-radius: 2px;
-  padding: 1px 4px;
-}
 
 /* ═══════════════ tabs ═══════════════ */
 .tabs{
@@ -578,7 +523,6 @@ img{ max-width: 100%; }
 }
 .blank h3{ font-size: 1.125rem; margin-bottom: 6px; }
 .blank p{ margin: 0 auto; max-width: 44ch; color: var(--ink-2); font-size: 0.875rem; }
-.blank .btn{ margin-top: 14px; }
 
 /* ═══════════════ binders ═══════════════ */
 .binder-rack{
@@ -700,7 +644,6 @@ img{ max-width: 100%; }
 .shelf-row .s-sub{ font-family: var(--mono); font-size: 0.6875rem; color: var(--ink-3); font-variant-numeric: tabular-nums; }
 
 .post{ display: grid; grid-template-columns: 236px 1fr; gap: 16px; align-items: start; }
-.post-side{ display: flex; flex-direction: column; gap: 8px; }
 .post-list{ display: flex; flex-direction: column; gap: 5px; list-style: none; margin: 0; padding: 0; }
 .post-item{
   width: 100%;
@@ -714,21 +657,10 @@ img{ max-width: 100%; }
 }
 .post-item:hover{ border-color: var(--ink-3); }
 .post-item[aria-current="true"]{ border-left-color: var(--accent); background: var(--sleeve-2); }
-.post-item .pi-top{ display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .post-item .pi-name{ font-weight: 600; font-size: 0.8125rem; }
 .post-item .pi-last{
   font-size: 0.75rem; color: var(--ink-2); margin-top: 2px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.unread-pip{
-  font-family: var(--mono);
-  font-size: 0.6875rem;
-  font-weight: 700;
-  background: var(--accent);
-  color: var(--on-accent);
-  border-radius: 10px;
-  padding: 1px 7px;
-  flex: none;
 }
 
 .wire{
@@ -896,10 +828,9 @@ img{ max-width: 100%; }
 </head>
 <body>
 
-<div id="gateRoot"></div>
+<a class="skip" href="#stage">Skip to main content</a>
 
-<div class="sheet" id="appRoot" hidden>
-  <a class="skip" href="#stage">Skip to main content</a>
+<div class="sheet">
   <header class="masthead">
     <div class="wordmark">
       <svg class="seal" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
@@ -930,114 +861,38 @@ img{ max-width: 100%; }
 <script>
 "use strict";
 
-/* ══════════════════════ config ══════════════════════ */
-const API_BASE = "http://127.0.0.1:8000";
+/* ══════════════════════ storage ══════════════════════ */
 const NS = "vgcbinder:";
-
-/* ══════════════════════ small utils ══════════════════════ */
-function esc(v){
-  return String(v ?? "").replace(/[&<>"']/g, (c) => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-  })[c]);
-}
-function safeUrl(v){
-  const s = String(v ?? "");
-  return /^https:\/\//i.test(s) ? esc(s) : "";
-}
-function plural(n, one, many){ return n === 1 ? one : many; }
-
-/* polite: routine confirmations. assertive: errors the reader must not miss. */
-function cry(msg){
-  const el = document.getElementById("crier");
-  el.classList.remove("is-bad");
-  el.textContent = msg;
-  el.classList.add("is-up");
-  clearTimeout(cry._t);
-  cry._t = setTimeout(() => el.classList.remove("is-up"), 3200);
-}
-function alarm(msg){
-  const el = document.getElementById("crier");
-  el.classList.add("is-bad");
-  el.textContent = msg;
-  el.classList.add("is-up");
-  document.getElementById("alertRegion").textContent = msg;
-  clearTimeout(cry._t);
-  cry._t = setTimeout(() => {
-    el.classList.remove("is-up");
-    document.getElementById("alertRegion").textContent = "";
-  }, 6000);
-}
-
-/* ══════════════════════ API layer ══════════════════════ */
-class ApiError extends Error {
-  constructor(status, message){ super(message); this.status = status; }
-}
-
-function detailToText(data, fallback){
-  const d = data && data.detail;
-  if (typeof d === "string") return d;
-  if (Array.isArray(d)){
-    return d.map(e => {
-      const field = e.loc && e.loc.length ? e.loc[e.loc.length - 1] : "";
-      return (field ? field + ": " : "") + e.msg;
-    }).join(" · ");
-  }
-  return fallback || "Something went wrong";
-}
-
-let accessToken = null;   // memory only — never persisted
-let me = null;            // the signed-in account
-
-function storedRefresh(){ return localStorage.getItem(NS + "refresh"); }
-function storeRefresh(t){ localStorage.setItem(NS + "refresh", t); }
-function clearRefresh(){ localStorage.removeItem(NS + "refresh"); }
-
-async function tryRefresh(){
-  const rt = storedRefresh();
-  if (!rt) return false;
-  try{
-    const res = await fetch(API_BASE + "/auth/refresh", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refresh_token: rt })
-    });
-    if (!res.ok){ clearRefresh(); return false; }
-    accessToken = (await res.json()).access_token;
-    return true;
-  }catch(err){
-    return false;   // network problem — keep the refresh token for later
-  }
-}
-
-async function api(path, { method = "GET", body, retry = true } = {}){
-  let res;
-  try{
-    res = await fetch(API_BASE + path, {
-      method,
-      headers: {
-        ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
-        ...(accessToken ? { "Authorization": "Bearer " + accessToken } : {})
-      },
-      body: body !== undefined ? JSON.stringify(body) : undefined
-    });
-  }catch(err){
-    throw new ApiError(0, "Can't reach the server at " + API_BASE);
-  }
-
-  // Expired access token: refresh once, replay once.
-  if (res.status === 401 && retry && storedRefresh()){
-    if (await tryRefresh()){
-      return api(path, { method, body, retry: false });
+const Vault = {
+  read(key){
+    try{ return localStorage.getItem(NS + key); }
+    catch(err){ console.warn("read failed", key, err); return null; }
+  },
+  write(key, val){
+    try{ localStorage.setItem(NS + key, val); return true; }
+    catch(err){
+      console.warn("write failed", key, err);
+      alarm("Couldn't save — this browser's storage is full or blocked. Export your data before making more changes.");
+      return false;
     }
-    signOutLocally();
-    throw new ApiError(401, "Session expired — sign in again");
+  },
+  readJSON(key, fallback){
+    const raw = Vault.read(key);
+    if (raw === null) return fallback;
+    try{ return JSON.parse(raw); }
+    catch(err){ return fallback; }
+  },
+  writeJSON(key, val){ return Vault.write(key, JSON.stringify(val)); },
+  allKeys(){
+    try{ return Object.keys(localStorage).filter(k => k.startsWith(NS)).map(k => k.slice(NS.length)); }
+    catch(err){ return []; }
+  },
+  drop(key){
+    try{ localStorage.removeItem(NS + key); }catch(err){ /* nothing to undo */ }
   }
+};
 
-  if (res.status === 204) return null;
-  const data = await res.json().catch(() => null);
-  if (!res.ok) throw new ApiError(res.status, detailToText(data));
-  return data;
-}
+const uid = (tag) => tag + "_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 
 /* ══════════════════════ reference data ══════════════════════ */
 const ORIGIN_GAMES = [
@@ -1061,31 +916,225 @@ const TERA_NAMES = Object.keys(TERA);
 
 /* ══════════════════════ state ══════════════════════ */
 const app = {
+  trainers: [],
+  trainerId: null,
   tab: "collection",
-  roster: [],            // last-fetched /pokemon
-  binders: [],           // last-fetched /binders
+  roster: [],
+  binders: [],
   openBinderId: null,
   tradeView: "browse",
-  wireWith: null,        // peer account id
+  wireWith: null,
   draftClip: null,
   filters: { q: "", shinyOnly: false, origin: "", mark: "" }
 };
-let paintSeq = 0;        // stale async renders bail out against this
 
+/* ══════════════════════ helpers ══════════════════════ */
+function esc(v){
+  return String(v ?? "").replace(/[&<>"']/g, (c) => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[c]);
+}
+function safeUrl(v){
+  const s = String(v ?? "");
+  return /^https:\/\//i.test(s) ? esc(s) : "";
+}
+/* polite: routine confirmations. assertive: errors the reader must not miss. */
+function cry(msg){
+  const el = document.getElementById("crier");
+  el.classList.remove("is-bad");
+  el.textContent = msg;
+  el.classList.add("is-up");
+  clearTimeout(cry._t);
+  cry._t = setTimeout(() => el.classList.remove("is-up"), 3200);
+}
+function alarm(msg){
+  const el = document.getElementById("crier");
+  el.classList.add("is-bad");
+  el.textContent = msg;
+  el.classList.add("is-up");
+  document.getElementById("alertRegion").textContent = msg;
+  clearTimeout(cry._t);
+  cry._t = setTimeout(() => {
+    el.classList.remove("is-up");
+    document.getElementById("alertRegion").textContent = "";
+  }, 6000);
+}
+function plural(n, one, many){ return n === 1 ? one : many; }
+
+/* ══════════════════════ data access ══════════════════════ */
+function loadTrainers(){
+  app.trainers = Vault.readJSON("trainers", []);
+  if (!Array.isArray(app.trainers) || app.trainers.length === 0){
+    app.trainers = [{ id: uid("tr"), name: "Trainer 1" }];
+    Vault.writeJSON("trainers", app.trainers);
+  }
+}
+function saveTrainers(){ Vault.writeJSON("trainers", app.trainers); }
+
+function loadActiveTrainer(){
+  const saved = Vault.read("active-trainer");
+  app.trainerId = app.trainers.some(t => t.id === saved) ? saved : app.trainers[0].id;
+  Vault.write("active-trainer", app.trainerId);
+}
+function bookFor(trainerId){
+  const book = Vault.readJSON("book:" + trainerId, { roster: [], binders: [] });
+  return { roster: book.roster || [], binders: book.binders || [] };
+}
+function loadBook(){
+  const book = bookFor(app.trainerId);
+  app.roster = book.roster;
+  app.binders = book.binders;
+}
+function saveBook(){
+  Vault.writeJSON("book:" + app.trainerId, { roster: app.roster, binders: app.binders });
+}
+function activeTrainer(){ return app.trainers.find(t => t.id === app.trainerId); }
+function trainerName(id){ return app.trainers.find(t => t.id === id)?.name || "Unknown trainer"; }
 function labelFor(p){ return p.nickname || p.species; }
 
-/* ══════════════════════ PokeAPI (sprites — client-side, cached) ══════════════════════ */
-function readCache(key, fallback){
-  try{ const raw = localStorage.getItem(NS + key); return raw ? JSON.parse(raw) : fallback; }
-  catch(err){ return fallback; }
-}
-function writeCache(key, val){
-  try{ localStorage.setItem(NS + key, JSON.stringify(val)); }catch(err){ /* cache only */ }
+function wireKey(a, b){ return "wire:" + [a, b].sort().join("~"); }
+function readWire(otherId){ return Vault.readJSON(wireKey(app.trainerId, otherId), []); }
+function writeWire(otherId, notes){ return Vault.writeJSON(wireKey(app.trainerId, otherId), notes); }
+
+/* ══════════════════════ export / import ══════════════════════ */
+const BACKUP_FORMAT = "vgc-binder";
+
+function buildBackup(){
+  const books = {};
+  const wires = {};
+  app.trainers.forEach(t => { books[t.id] = bookFor(t.id); });
+  Vault.allKeys().filter(k => k.startsWith("wire:")).forEach(k => {
+    wires[k.slice("wire:".length)] = Vault.readJSON(k, []);
+  });
+  return {
+    format: BACKUP_FORMAT,
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    activeTrainer: app.trainerId,
+    trainers: app.trainers,
+    books,
+    wires
+  };
 }
 
-const speciesMemo = readCache("species-memo", {});
-let speciesIndex = readCache("species-index", null);
+function tallyBackup(data){
+  const trainers = Array.isArray(data.trainers) ? data.trainers.length : 0;
+  let pokemon = 0, binders = 0;
+  Object.values(data.books || {}).forEach(b => {
+    pokemon += (b.roster || []).length;
+    binders += (b.binders || []).length;
+  });
+  const threads = Object.values(data.wires || {}).filter(w => Array.isArray(w) && w.length).length;
+  return { trainers, pokemon, binders, threads };
+}
+
+function exportBackup(){
+  const data = buildBackup();
+  const stamp = new Date().toISOString().slice(0, 10);
+  const name = `vgc-binder-${stamp}.json`;
+  let url;
+  try{
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }catch(err){
+    alarm("Export failed — this browser blocked the download.");
+    return;
+  }finally{
+    if (url) setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+  const n = tallyBackup(data);
+  cry(`Exported ${name} — ${n.trainers} ${plural(n.trainers,"trainer","trainers")}, ${n.pokemon} Pokémon, ${n.binders} ${plural(n.binders,"binder","binders")}.`);
+}
+
+function pickImportFile(){
+  const input = document.getElementById("importFile");
+  input.value = "";
+  input.click();
+}
+
+function handleImportFile(file){
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onerror = () => alarm("Couldn't read that file. Try exporting a fresh copy.");
+  reader.onload = () => {
+    let data;
+    try{ data = JSON.parse(String(reader.result)); }
+    catch(err){
+      alarm("That file isn't valid JSON, so there's nothing to import.");
+      return;
+    }
+    if (!data || data.format !== BACKUP_FORMAT || !Array.isArray(data.trainers)){
+      alarm("That's not a VGC Binder export. Use a file saved by the Export button.");
+      return;
+    }
+    if (data.trainers.length === 0){
+      alarm("That export has no trainers in it, so there's nothing to restore.");
+      return;
+    }
+    confirmImport(data, file.name);
+  };
+  reader.readAsText(file);
+}
+
+function confirmImport(data, filename){
+  const n = tallyBackup(data);
+  const now = tallyBackup(buildBackup());
+  openDialog(`
+    <h2 id="dlgTitle">Import ${esc(filename)}?</h2>
+    <p class="card-sub" id="dlgDesc">This replaces everything currently on this browser. Export first if you want to keep it.</p>
+    <ul class="summary-list">
+      <li><span class="fig">${n.trainers}</span><span class="eyebrow">${plural(n.trainers,"Trainer","Trainers")}</span></li>
+      <li><span class="fig">${n.pokemon}</span><span class="eyebrow">Pokémon</span></li>
+      <li><span class="fig">${n.binders}</span><span class="eyebrow">${plural(n.binders,"Binder","Binders")}</span></li>
+      <li><span class="fig">${n.threads}</span><span class="eyebrow">${plural(n.threads,"Thread","Threads")}</span></li>
+    </ul>
+    <p class="f-hint">Replacing ${now.trainers} ${plural(now.trainers,"trainer","trainers")} and ${now.pokemon} Pokémon currently stored here.</p>
+    <div class="card-acts">
+      <button class="btn btn--quiet" data-close>Cancel</button>
+      <button class="btn" id="exportFirst">Export current first</button>
+      <button class="btn btn--go" id="doImport">Replace everything</button>
+    </div>
+  `, "card--slim");
+
+  document.getElementById("exportFirst").addEventListener("click", exportBackup);
+  document.getElementById("doImport").addEventListener("click", () => {
+    Vault.allKeys().forEach(k => Vault.drop(k));
+    Vault.writeJSON("trainers", data.trainers);
+    Object.entries(data.books || {}).forEach(([id, book]) => {
+      Vault.writeJSON("book:" + id, { roster: book.roster || [], binders: book.binders || [] });
+    });
+    Object.entries(data.wires || {}).forEach(([pair, notes]) => {
+      if (Array.isArray(notes)) Vault.writeJSON("wire:" + pair, notes);
+    });
+    const wanted = data.activeTrainer;
+    Vault.write("active-trainer", data.trainers.some(t => t.id === wanted) ? wanted : data.trainers[0].id);
+
+    closeDialog();
+    app.openBinderId = null;
+    app.wireWith = null;
+    app.draftClip = null;
+    app.tab = "collection";
+    app.filters = { q: "", shinyOnly: false, origin: "", mark: "" };
+    boot();
+    cry(`Imported ${n.pokemon} Pokémon across ${n.trainers} ${plural(n.trainers,"trainer","trainers")}.`);
+  });
+}
+
+/* ══════════════════════ PokeAPI ══════════════════════ */
+const speciesMemo = Vault.readJSON("species-memo", {});
+let speciesIndex = Vault.readJSON("species-index", null);
 let apiReachable = true;
+
+function memoize(slug, info){
+  speciesMemo[slug] = info;
+  Vault.writeJSON("species-memo", speciesMemo);
+}
 
 async function lookupSpecies(raw){
   const slug = String(raw).trim().toLowerCase().replace(/[\s_]+/g, "-");
@@ -1102,8 +1151,7 @@ async function lookupSpecies(raw){
       art: data.sprites?.front_default || null,
       artShiny: data.sprites?.front_shiny || data.sprites?.front_default || null
     };
-    speciesMemo[slug] = info;
-    writeCache("species-memo", speciesMemo);
+    memoize(slug, info);
     return info;
   }catch(err){
     apiReachable = false;
@@ -1112,15 +1160,19 @@ async function lookupSpecies(raw){
 }
 
 async function ensureSpeciesIndex(){
-  if (Array.isArray(speciesIndex) && speciesIndex.length) return;
+  if (Array.isArray(speciesIndex) && speciesIndex.length) return speciesIndex;
   try{
     const res = await fetch("https://pokeapi.co/api/v2/pokemon?limit=1400");
-    if (!res.ok) return;
+    if (!res.ok) return null;
     const data = await res.json();
     speciesIndex = (data.results || []).map(r => r.name);
-    writeCache("species-index", speciesIndex);
+    Vault.writeJSON("species-index", speciesIndex);
     refreshSpeciesDatalist();
-  }catch(err){ apiReachable = false; }
+    return speciesIndex;
+  }catch(err){
+    apiReachable = false;
+    return null;
+  }
 }
 
 function refreshSpeciesDatalist(){
@@ -1129,183 +1181,35 @@ function refreshSpeciesDatalist(){
   list.innerHTML = speciesIndex.map(n => `<option value="${esc(n)}"></option>`).join("");
 }
 
-/* ══════════════════════ auth gate ══════════════════════ */
-let gateMode = "login";
-
-function enterGate(message){
-  me = null;
-  accessToken = null;
-  document.getElementById("appRoot").hidden = true;
-  const root = document.getElementById("gateRoot");
-  root.innerHTML = `
-    <div class="gate">
-      <div class="gate-card">
-        <div class="gate-brand">
-          <svg class="seal" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
-            <circle cx="20" cy="20" r="18" fill="none" stroke="currentColor" stroke-width="2"></circle>
-            <path d="M2 20 H38" stroke="currentColor" stroke-width="2"></path>
-            <circle cx="20" cy="20" r="6.5" fill="var(--sleeve)" stroke="currentColor" stroke-width="2"></circle>
-            <circle cx="20" cy="20" r="2.5" fill="var(--accent)"></circle>
-          </svg>
-          <h1>VGC Binder</h1>
-        </div>
-        <p class="gate-sub">Collection &amp; trade catalogue</p>
-        <div class="gate-toggle">
-          <button type="button" id="modeLogin" aria-pressed="${gateMode === "login"}">Sign in</button>
-          <button type="button" id="modeRegister" aria-pressed="${gateMode === "register"}">Create account</button>
-        </div>
-        <form id="gateForm" novalidate>
-          <div class="fields">
-            ${gateMode === "register" ? `
-              <div class="f">
-                <label class="eyebrow" for="gName">Display name</label>
-                <input class="txt" id="gName" type="text" autocomplete="nickname" maxlength="40" placeholder="Ash">
-              </div>` : ""}
-            <div class="f">
-              <label class="eyebrow" for="gUser">Username</label>
-              <input class="txt" id="gUser" type="text" autocomplete="username"
-                     maxlength="32" spellcheck="false" aria-describedby="gUserHint">
-              ${gateMode === "register" ? `<p class="f-hint" id="gUserHint">3–32 characters: letters, numbers, - and _</p>` : `<span id="gUserHint" hidden></span>`}
-            </div>
-            <div class="f">
-              <label class="eyebrow" for="gPass">Password</label>
-              <input class="txt" id="gPass" type="password"
-                     autocomplete="${gateMode === "register" ? "new-password" : "current-password"}"
-                     aria-describedby="gPassHint">
-              ${gateMode === "register" ? `<p class="f-hint" id="gPassHint">At least 8 characters — any length works</p>` : `<span id="gPassHint" hidden></span>`}
-            </div>
-            <div id="gateErr"></div>
-            <button class="btn btn--go" id="gateGo" type="submit" style="width:100%; justify-content:center;">
-              ${gateMode === "register" ? "Create account" : "Sign in"}
-            </button>
-          </div>
-        </form>
-        <p class="gate-note">Talks to the API at <code>${esc(API_BASE)}</code>. If it isn't running:
-          <code>cd vgc-backend &amp;&amp; .venv/bin/uvicorn main:app</code></p>
-      </div>
-    </div>
-  `;
-
-  document.getElementById("modeLogin").addEventListener("click", () => switchGateMode("login"));
-  document.getElementById("modeRegister").addEventListener("click", () => switchGateMode("register"));
-  document.getElementById("gateForm").addEventListener("submit", submitGate);
-  const userEl = document.getElementById("gUser");
-  if (enterGate._keepUser) userEl.value = enterGate._keepUser;
-  (gateMode === "register" ? document.getElementById("gName") : userEl).focus();
-  if (message) alarm(message);
-}
-
-function switchGateMode(mode){
-  enterGate._keepUser = document.getElementById("gUser")?.value || "";
-  gateMode = mode;
-  enterGate();
-}
-
-function gateError(msg, fieldId){
-  const slot = document.getElementById("gateErr");
-  slot.innerHTML = `<p class="f-err">${esc(msg)}</p>`;
-  document.getElementById("alertRegion").textContent = msg;
-  if (fieldId){
-    const f = document.getElementById(fieldId);
-    f.setAttribute("aria-invalid", "true");
-    f.focus();
-  }
-}
-
-async function submitGate(e){
-  e.preventDefault();
-  document.getElementById("gateErr").innerHTML = "";
-  ["gUser","gPass","gName"].forEach(id => document.getElementById(id)?.removeAttribute("aria-invalid"));
-
-  const username = document.getElementById("gUser").value.trim();
-  const password = document.getElementById("gPass").value;
-  if (!username) return gateError("Enter your username.", "gUser");
-  if (!password) return gateError("Enter your password.", "gPass");
-
-  const btn = document.getElementById("gateGo");
-  btn.disabled = true;
-  btn.textContent = gateMode === "register" ? "Creating…" : "Signing in…";
-
-  try{
-    let data;
-    if (gateMode === "register"){
-      const display = document.getElementById("gName").value.trim();
-      if (!display){
-        gateError("Pick a display name — other trainers see it.", "gName");
-        return;
-      }
-      data = await api("/auth/register", { method: "POST",
-        body: { username, display_name: display, password } });
-    } else {
-      data = await api("/auth/login", { method: "POST",
-        body: { username, password } });
-    }
-    accessToken = data.access_token;
-    storeRefresh(data.refresh_token);
-    me = data.account;
-    enterApp();
-    cry(`Signed in as ${me.display_name}`);
-  }catch(err){
-    if (err.status === 0){
-      gateError(err.message + " — start it and try again.");
-    } else if (err.status === 409){
-      gateError("That username is taken.", "gUser");
-    } else if (err.status === 401){
-      gateError("Wrong username or password.", "gPass");
-    } else {
-      gateError(err.message);
-    }
-  }finally{
-    btn.disabled = false;
-    btn.textContent = gateMode === "register" ? "Create account" : "Sign in";
-  }
-}
-
-function signOutLocally(){
-  clearRefresh();
-  accessToken = null;
-  me = null;
-  app.roster = []; app.binders = [];
-  app.openBinderId = null; app.wireWith = null; app.draftClip = null;
-}
-
-async function logout(){
-  const rt = storedRefresh();
-  if (rt){
-    try{ await api("/auth/logout", { method: "POST", body: { refresh_token: rt }, retry: false }); }
-    catch(err){ /* revoking best-effort — local sign-out proceeds regardless */ }
-  }
-  signOutLocally();
-  gateMode = "login";   // whatever the toggle was before, signing out lands on sign-in
-  enterGate();
-  cry("Signed out");
-}
-
-function enterApp(){
-  document.getElementById("gateRoot").innerHTML = "";
-  document.getElementById("appRoot").hidden = false;
-  app.tab = "collection";
-  renderDeskbar();
-  renderTabs();
-  renderStage();
-}
-
-/* ══════════════════════ shell ══════════════════════ */
+/* ══════════════════════ shell render ══════════════════════ */
 function renderDeskbar(){
   const bar = document.getElementById("deskbar");
   bar.innerHTML = `
-    <div class="whoami">
-      <span class="eyebrow">Signed in</span>
-      <span class="who">${esc(me.display_name)} <span class="mono" style="color:var(--ink-3); font-size:0.6875rem;">@${esc(me.username)}</span></span>
+    <div class="trainer-pick">
+      <label class="eyebrow" for="trainerSelect">Active trainer</label>
+      <select id="trainerSelect">
+        ${app.trainers.map(t => `<option value="${esc(t.id)}"${t.id === app.trainerId ? " selected" : ""}>${esc(t.name)}</option>`).join("")}
+      </select>
     </div>
+    <button class="btn" id="addTrainer">Add trainer</button>
     <span class="sep" aria-hidden="true"></span>
-    <button class="btn" id="exportBtn" aria-label="Export your collection and binders to a file">Export</button>
-    <button class="btn" id="importBtn" aria-label="Import collection and binders from a file">Import</button>
-    <button class="btn btn--quiet" id="logoutBtn">Log out</button>
+    <button class="btn" id="exportBtn" aria-label="Export all trainers and collections to a file">Export</button>
+    <button class="btn" id="importBtn" aria-label="Import trainers and collections from a file">Import</button>
   `;
+  document.getElementById("trainerSelect").addEventListener("change", (e) => {
+    app.trainerId = e.target.value;
+    Vault.write("active-trainer", app.trainerId);
+    loadBook();
+    app.openBinderId = null;
+    app.wireWith = null;
+    app.draftClip = null;
+    renderTabs();
+    renderStage();
+    cry("Switched to " + activeTrainer().name);
+  });
+  document.getElementById("addTrainer").addEventListener("click", openTrainerDialog);
   document.getElementById("exportBtn").addEventListener("click", exportBackup);
   document.getElementById("importBtn").addEventListener("click", pickImportFile);
-  document.getElementById("logoutBtn").addEventListener("click", logout);
 }
 
 const TAB_DEFS = [
@@ -1343,21 +1247,6 @@ function renderTabs(){
   });
 }
 
-/* Update a tab's count in place — no innerHTML swap, so keyboard focus survives. */
-function setTally(tabId, count){
-  const btn = document.getElementById("tab-" + tabId);
-  if (!btn) return;
-  const def = TAB_DEFS.find(t => t.id === tabId);
-  btn.setAttribute("aria-label", `${def.label}, ${count} ${plural(count, "item", "items")}`);
-  let t = btn.querySelector(".tally");
-  if (!t){
-    t = document.createElement("span");
-    t.className = "tally";
-    btn.firstElementChild.appendChild(t);
-  }
-  t.textContent = count;
-}
-
 function switchTab(id){
   app.tab = id;
   app.openBinderId = null;
@@ -1375,38 +1264,12 @@ function renderStage(){
   return renderTrade(stage);
 }
 
-function stageFailed(stage, err){
-  stage.innerHTML = `
-    <div class="blank">
-      <h3>Couldn't load</h3>
-      <p>${esc(err.message)}</p>
-      <button class="btn" id="retryBtn">Try again</button>
-    </div>`;
-  document.getElementById("retryBtn").addEventListener("click", renderStage);
-  alarm(err.message);
-}
-
 /* ══════════════════════ collection ══════════════════════ */
-async function renderCollection(stage){
-  const seq = ++paintSeq;
-  stage.innerHTML = `<p class="count-note">Loading collection…</p>`;
-  let roster, binders;
-  try{
-    [roster, binders] = await Promise.all([api("/pokemon"), api("/binders")]);
-  }catch(err){
-    if (seq === paintSeq) stageFailed(stage, err);
-    return;
-  }
-  if (seq !== paintSeq) return;
-  app.roster = roster;
-  app.binders = binders;
-  setTally("collection", roster.length);
-  setTally("binders", binders.length);
-
-  const total = roster.length;
-  const shiny = roster.filter(p => p.shiny).length;
-  const marked = roster.filter(p => p.mark).length;
-  const filed = new Set(binders.flatMap(b => b.pokemon_ids)).size;
+function renderCollection(stage){
+  const total = app.roster.length;
+  const shiny = app.roster.filter(p => p.shiny).length;
+  const marked = app.roster.filter(p => p.mark && p.mark !== "None").length;
+  const filed = new Set(app.binders.flatMap(b => b.pokemonIds)).size;
 
   stage.innerHTML = `
     <h2 class="sr-only">Collection</h2>
@@ -1461,7 +1324,7 @@ function siftRoster(){
   return app.roster.filter(p => {
     if (q && !(p.species.toLowerCase().includes(q) || (p.nickname || "").toLowerCase().includes(q))) return false;
     if (f.shinyOnly && !p.shiny) return false;
-    if (f.origin && p.origin_game !== f.origin) return false;
+    if (f.origin && p.originGame !== f.origin) return false;
     if (f.mark && p.mark !== f.mark) return false;
     return true;
   });
@@ -1474,56 +1337,59 @@ function paintRoster(){
   const list = siftRoster();
 
   note.textContent = list.length === app.roster.length
-    ? `${app.roster.length} ${plural(app.roster.length, "entry", "entries")} · ${me.display_name}`
-    : `${list.length} of ${app.roster.length} shown · ${me.display_name}`;
+    ? `${app.roster.length} ${plural(app.roster.length, "entry", "entries")} · ${activeTrainer().name}`
+    : `${list.length} of ${app.roster.length} shown · ${activeTrainer().name}`;
 
   if (app.roster.length === 0){
+    out.className = "";
     out.innerHTML = `<div class="blank"><h3>Nothing catalogued yet</h3><p>Add your first Pokémon and its provenance — origin game, ball, mark, OT — and it becomes available to file into trade binders.</p></div>`;
     return;
   }
   if (list.length === 0){
+    out.className = "";
     out.innerHTML = `<div class="blank"><h3>No matches</h3><p>Nothing in this collection fits those filters. Clear one to widen the search.</p></div>`;
     return;
   }
 
+  out.className = "";
   out.innerHTML = `<ul class="pockets">${list.map(p => `<li>${pocketHTML(p, { tools: "roster" })}</li>`).join("")}</ul>`;
   wirePocketTools(out);
 }
 
 function pocketHTML(p, opts){
-  const art = p.shiny ? (p.art_shiny || p.art) : p.art;
+  const art = p.shiny ? (p.artShiny || p.art) : p.art;
   const artUrl = safeUrl(art);
   const name = labelFor(p);
   const headId = "pk-" + p.id;
 
   const tags = [];
-  if (p.origin_game) tags.push(`<li class="tag">${esc(p.origin_game)}</li>`);
-  if (p.mark) tags.push(`<li class="tag tag--mark">${esc(p.mark)}</li>`);
+  if (p.originGame) tags.push(`<li class="tag">${esc(p.originGame)}</li>`);
+  if (p.mark && p.mark !== "None") tags.push(`<li class="tag tag--mark">${esc(p.mark)}</li>`);
   if (p.ribbon) tags.push(`<li class="tag tag--ribbon">${esc(p.ribbon)}</li>`);
   if (p.ball) tags.push(`<li class="tag">${esc(p.ball)}</li>`);
   /* Tera type is written out, not signalled by the gem colour alone (WCAG 1.4.1) */
-  if (p.tera_type){
-    tags.push(`<li class="tag"><span class="gem-dot${p.tera_type === "Stellar" ? " is-stellar" : ""}" style="--gem:${esc(TERA[p.tera_type] || "#888")}" aria-hidden="true"></span>Tera ${esc(p.tera_type)}</li>`);
+  if (p.teraType){
+    tags.push(`<li class="tag"><span class="gem-dot${p.teraType === "Stellar" ? " is-stellar" : ""}" style="--gem:${esc(TERA[p.teraType] || "#888")}" aria-hidden="true"></span>Tera ${esc(p.teraType)}</li>`);
   }
 
-  const catLine = p.dex_id
-    ? `#${String(p.dex_id).padStart(4, "0")}${p.nickname ? " · " + esc(p.species) : ""}`
+  const catLine = p.dexId
+    ? `#${String(p.dexId).padStart(4, "0")}${p.nickname ? " · " + esc(p.species) : ""}`
     : (p.nickname ? esc(p.species) : "Not in dex index");
   /* "#0727 · incineroar" reads badly aloud — "#" and the middot are announced
      literally or dropped, so spell the same facts out for the screen reader. */
-  const catSpoken = p.dex_id
-    ? `Dex ${p.dex_id}${p.nickname ? ", species " + p.species : ""}`
+  const catSpoken = p.dexId
+    ? `Dex ${p.dexId}${p.nickname ? ", species " + p.species : ""}`
     : (p.nickname ? `Species ${p.species}` : "Not in dex index");
 
   let tools = "";
   if (opts.tools === "roster"){
     tools = `<div class="pocket-tools">
-      <button type="button" data-act="edit" data-id="${p.id}" aria-label="Edit ${esc(name)}">Edit</button>
-      <button type="button" class="peril" data-act="drop" data-id="${p.id}" aria-label="Remove ${esc(name)} from collection">Remove</button>
+      <button type="button" data-act="edit" data-id="${esc(p.id)}" aria-label="Edit ${esc(name)}">Edit</button>
+      <button type="button" class="peril" data-act="drop" data-id="${esc(p.id)}" aria-label="Remove ${esc(name)} from collection">Remove</button>
     </div>`;
   } else if (opts.tools === "binder"){
     tools = `<div class="pocket-tools">
-      <button type="button" class="peril" data-act="unfile" data-id="${p.id}" aria-label="Take ${esc(name)} out of this binder">Take out</button>
+      <button type="button" class="peril" data-act="unfile" data-id="${esc(p.id)}" aria-label="Take ${esc(name)} out of this binder">Take out</button>
     </div>`;
   }
 
@@ -1534,7 +1400,7 @@ function pocketHTML(p, opts){
           ? `<img src="${artUrl}" alt="${esc(p.species)} sprite" loading="lazy">`
           : `<span class="no-art" aria-hidden="true">${esc((p.species || "?").slice(0,2))}</span>`}
         ${p.shiny ? `<span class="foil-flag">SHINY</span>` : ""}
-        ${p.tera_type ? `<span class="tera-gem${p.tera_type === "Stellar" ? " is-stellar" : ""}" style="--gem:${esc(TERA[p.tera_type] || "#888")}" aria-hidden="true"></span>` : ""}
+        ${p.teraType ? `<span class="tera-gem${p.teraType === "Stellar" ? " is-stellar" : ""}" style="--gem:${esc(TERA[p.teraType] || "#888")}" aria-hidden="true"></span>` : ""}
       </div>
       <div class="pocket-label">
         <h3 class="p-name" id="${esc(headId)}">${esc(name)}</h3>
@@ -1548,8 +1414,8 @@ function pocketHTML(p, opts){
 
 function wirePocketTools(root){
   root.querySelectorAll("[data-act]").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const id = Number(btn.dataset.id);
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.id;
       if (btn.dataset.act === "edit"){
         openEntryDialog(app.roster.find(p => p.id === id));
       } else if (btn.dataset.act === "drop"){
@@ -1558,10 +1424,8 @@ function wirePocketTools(root){
         const binder = app.binders.find(b => b.id === app.openBinderId);
         const p = app.roster.find(x => x.id === id);
         if (!binder) return;
-        try{
-          await api(`/binders/${binder.id}/pokemon`, { method: "PUT",
-            body: { pokemon_ids: binder.pokemon_ids.filter(x => x !== id) } });
-        }catch(err){ alarm(err.message); return; }
+        binder.pokemonIds = binder.pokemonIds.filter(x => x !== id);
+        saveBook();
         renderStage();
         cry(`${labelFor(p)} taken out of ${binder.name}`);
       }
@@ -1572,16 +1436,18 @@ function wirePocketTools(root){
 function confirmDrop(id){
   const p = app.roster.find(x => x.id === id);
   if (!p) return;
-  const inBinders = app.binders.filter(b => b.pokemon_ids.includes(id));
+  const inBinders = app.binders.filter(b => b.pokemonIds.includes(id));
   askConfirm({
     title: "Remove " + labelFor(p) + "?",
     body: inBinders.length
       ? `This also takes it out of ${inBinders.length} ${plural(inBinders.length, "binder", "binders")}: ${inBinders.map(b => b.name).join(", ")}.`
       : "This deletes the entry and its provenance details.",
     go: "Remove entry",
-    async onGo(){
-      try{ await api(`/pokemon/${id}`, { method: "DELETE" }); }
-      catch(err){ alarm(err.message); return; }
+    onGo(){
+      app.roster = app.roster.filter(x => x.id !== id);
+      app.binders.forEach(b => { b.pokemonIds = b.pokemonIds.filter(x => x !== id); });
+      saveBook();
+      renderTabs();
       renderStage();
       cry("Removed " + labelFor(p));
     }
@@ -1592,12 +1458,10 @@ function confirmDrop(id){
 function openEntryDialog(existing){
   const editing = Boolean(existing);
   const p = existing || {
-    species: "", nickname: "", shiny: false, mark: "", ribbon: "",
-    origin_game: ORIGIN_GAMES[0], tera_type: "", ball: "", level: null,
-    nature: "", ability: "", ot: "", language: "", notes: "",
-    dex_id: null, art: null, art_shiny: null
+    id: uid("pk"), species: "", nickname: "", shiny: false, mark: "None", ribbon: "",
+    originGame: ORIGIN_GAMES[0], ball: "", nature: "", ability: "", teraType: "",
+    level: "", ot: "", language: "", notes: ""
   };
-  const markSel = p.mark || "None";
 
   openDialog(`
     <h2 id="dlgTitle">${editing ? "Edit entry" : "Catalogue a Pokémon"}</h2>
@@ -1612,7 +1476,7 @@ function openEntryDialog(existing){
         </div>
         <div class="f">
           <label class="eyebrow" for="fNick">Nickname</label>
-          <input class="txt" id="fNick" type="text" placeholder="optional" maxlength="40" value="${esc(p.nickname)}">
+          <input class="txt" id="fNick" type="text" placeholder="optional" value="${esc(p.nickname)}">
         </div>
       </div>
 
@@ -1624,24 +1488,24 @@ function openEntryDialog(existing){
       <div class="pair">
         <div class="f">
           <label class="eyebrow" for="fMark">Mark</label>
-          <select class="txt" id="fMark">${MARKS.map(m => `<option${markSel === m ? " selected" : ""}>${esc(m)}</option>`).join("")}</select>
+          <select class="txt" id="fMark">${MARKS.map(m => `<option${p.mark === m ? " selected" : ""}>${esc(m)}</option>`).join("")}</select>
         </div>
         <div class="f">
           <label class="eyebrow" for="fRibbon">Ribbon or title</label>
-          <input class="txt" id="fRibbon" type="text" placeholder="Regional Champion" maxlength="64" value="${esc(p.ribbon)}">
+          <input class="txt" id="fRibbon" type="text" placeholder="Regional Champion" value="${esc(p.ribbon)}">
         </div>
       </div>
 
       <div class="pair">
         <div class="f">
           <label class="eyebrow" for="fOrigin">Origin game</label>
-          <select class="txt" id="fOrigin">${ORIGIN_GAMES.map(g => `<option${p.origin_game === g ? " selected" : ""}>${esc(g)}</option>`).join("")}</select>
+          <select class="txt" id="fOrigin">${ORIGIN_GAMES.map(g => `<option${p.originGame === g ? " selected" : ""}>${esc(g)}</option>`).join("")}</select>
         </div>
         <div class="f">
           <label class="eyebrow" for="fTera">Tera type</label>
           <select class="txt" id="fTera">
             <option value="">None recorded</option>
-            ${TERA_NAMES.map(t => `<option${p.tera_type === t ? " selected" : ""}>${esc(t)}</option>`).join("")}
+            ${TERA_NAMES.map(t => `<option${p.teraType === t ? " selected" : ""}>${esc(t)}</option>`).join("")}
           </select>
         </div>
       </div>
@@ -1649,41 +1513,39 @@ function openEntryDialog(existing){
       <div class="pair">
         <div class="f">
           <label class="eyebrow" for="fBall">Ball</label>
-          <input class="txt" id="fBall" type="text" placeholder="Beast Ball" maxlength="40" value="${esc(p.ball)}">
+          <input class="txt" id="fBall" type="text" placeholder="Beast Ball" value="${esc(p.ball)}">
         </div>
         <div class="f">
           <label class="eyebrow" for="fLevel">Level</label>
-          <input class="txt mono" id="fLevel" type="text" inputmode="numeric"
-                 aria-describedby="levelHint" value="${p.level ?? ""}">
-          <p class="f-hint" id="levelHint">1–100, or leave blank</p>
+          <input class="txt mono" id="fLevel" type="text" inputmode="numeric" value="${esc(p.level)}">
         </div>
       </div>
 
       <div class="pair">
         <div class="f">
           <label class="eyebrow" for="fNature">Nature</label>
-          <input class="txt" id="fNature" type="text" placeholder="Adamant" maxlength="20" value="${esc(p.nature)}">
+          <input class="txt" id="fNature" type="text" placeholder="Adamant" value="${esc(p.nature)}">
         </div>
         <div class="f">
           <label class="eyebrow" for="fAbility">Ability</label>
-          <input class="txt" id="fAbility" type="text" placeholder="Intimidate" maxlength="40" value="${esc(p.ability)}">
+          <input class="txt" id="fAbility" type="text" placeholder="Intimidate" value="${esc(p.ability)}">
         </div>
       </div>
 
       <div class="pair">
         <div class="f">
           <label class="eyebrow" for="fOt">Original trainer</label>
-          <input class="txt" id="fOt" type="text" maxlength="40" value="${esc(p.ot)}">
+          <input class="txt" id="fOt" type="text" value="${esc(p.ot)}">
         </div>
         <div class="f">
           <label class="eyebrow" for="fLang">Language</label>
-          <input class="txt" id="fLang" type="text" placeholder="English" maxlength="20" value="${esc(p.language)}">
+          <input class="txt" id="fLang" type="text" placeholder="English" value="${esc(p.language)}">
         </div>
       </div>
 
       <div class="f">
         <label class="eyebrow" for="fNotes">Notes</label>
-        <textarea class="txt" id="fNotes" maxlength="2000" placeholder="Trade history, IV spread, anything worth remembering">${esc(p.notes)}</textarea>
+        <textarea class="txt" id="fNotes" placeholder="Trade history, IV spread, anything worth remembering">${esc(p.notes)}</textarea>
       </div>
     </div>
     <div class="card-acts">
@@ -1696,73 +1558,56 @@ function openEntryDialog(existing){
   document.getElementById("fSpecies").focus();
 
   document.getElementById("saveEntry").addEventListener("click", async () => {
-    const speciesField = document.getElementById("fSpecies");
-    const species = speciesField.value.trim();
+    const field = document.getElementById("fSpecies");
+    const species = field.value.trim();
     if (!species){
-      showFieldError(speciesField, "speciesErr", "Enter a species name — it's the one detail every entry needs.");
+      showFieldError(field, "speciesErr", "Enter a species name — it's the one detail every entry needs.");
       return;
     }
-    clearFieldError(speciesField, "speciesErr", "speciesHint");
-
-    const levelField = document.getElementById("fLevel");
-    const levelRaw = levelField.value.trim();
-    let level = null;
-    if (levelRaw !== ""){
-      level = parseInt(levelRaw, 10);
-      if (!Number.isInteger(level) || level < 1 || level > 100){
-        showFieldError(levelField, "levelErr", "Level must be a number from 1 to 100, or blank.");
-        return;
-      }
-    }
-    clearFieldError(levelField, "levelErr", "levelHint");
+    clearFieldError(field, "speciesErr", "speciesHint");
 
     const btn = document.getElementById("saveEntry");
     btn.disabled = true;
     btn.textContent = "Looking up…";
 
     const info = await lookupSpecies(species);
-    const markVal = document.getElementById("fMark").value;
-    const payload = {
+    const entry = {
+      ...p,
       species: info ? info.name : species.toLowerCase(),
+      dexId: info ? info.dexId : p.dexId,
+      art: info ? info.art : p.art,
+      artShiny: info ? info.artShiny : p.artShiny,
       nickname: document.getElementById("fNick").value.trim(),
       shiny: document.getElementById("fShiny").checked,
-      mark: markVal === "None" ? "" : markVal,
+      mark: document.getElementById("fMark").value,
       ribbon: document.getElementById("fRibbon").value.trim(),
-      origin_game: document.getElementById("fOrigin").value,
-      tera_type: document.getElementById("fTera").value,
+      originGame: document.getElementById("fOrigin").value,
+      teraType: document.getElementById("fTera").value,
       ball: document.getElementById("fBall").value.trim(),
-      level,
+      level: document.getElementById("fLevel").value.trim(),
       nature: document.getElementById("fNature").value.trim(),
       ability: document.getElementById("fAbility").value.trim(),
       ot: document.getElementById("fOt").value.trim(),
       language: document.getElementById("fLang").value.trim(),
-      notes: document.getElementById("fNotes").value.trim(),
-      dex_id: info ? info.dexId : p.dex_id,
-      art: info ? info.art : p.art,
-      art_shiny: info ? info.artShiny : p.art_shiny
+      notes: document.getElementById("fNotes").value.trim()
     };
 
-    btn.textContent = "Saving…";
-    let saved;
-    try{
-      saved = editing
-        ? await api(`/pokemon/${existing.id}`, { method: "PUT", body: payload })
-        : await api("/pokemon", { method: "POST", body: payload });
-    }catch(err){
-      btn.disabled = false;
-      btn.textContent = editing ? "Save entry" : "Add to collection";
-      alarm(err.message);
-      return;
+    if (editing){
+      app.roster = app.roster.map(x => x.id === entry.id ? entry : x);
+    } else {
+      app.roster.push(entry);
     }
-
+    saveBook();
     closeDialog();
+    renderTabs();
     renderStage();
+
     if (!info){
       alarm(apiReachable
         ? `Saved, but "${species}" isn't a PokéAPI name, so it has no sprite or dex number. Edit it to correct the spelling.`
         : "Saved without a sprite — PokéAPI is unreachable right now. Edit the entry later to fetch it.");
     } else {
-      cry(labelFor(saved) + (editing ? " updated" : " catalogued"));
+      cry(labelFor(entry) + (editing ? " updated" : " catalogued"));
     }
   });
 }
@@ -1786,29 +1631,57 @@ function clearFieldError(field, errId, restoreDescribedBy){
   document.getElementById("alertRegion").textContent = "";
 }
 
-/* ══════════════════════ binders ══════════════════════ */
-async function renderBinders(stage){
-  const seq = ++paintSeq;
-  stage.innerHTML = `<p class="count-note">Loading binders…</p>`;
-  let roster, binders;
-  try{
-    [roster, binders] = await Promise.all([api("/pokemon"), api("/binders")]);
-  }catch(err){
-    if (seq === paintSeq) stageFailed(stage, err);
-    return;
-  }
-  if (seq !== paintSeq) return;
-  app.roster = roster;
-  app.binders = binders;
-  setTally("collection", roster.length);
-  setTally("binders", binders.length);
+/* ══════════════════════ trainers ══════════════════════ */
+function openTrainerDialog(){
+  openDialog(`
+    <h2 id="dlgTitle">Add a trainer</h2>
+    <p class="card-sub" id="dlgDesc">Each trainer keeps a separate collection and set of binders. Trainers on this browser can browse each other's tradeable binders and message about them.</p>
+    <div class="fields">
+      <div class="f">
+        <label class="eyebrow" for="fTrainer">Trainer name (required)</label>
+        <input class="txt" id="fTrainer" type="text" placeholder="Ash" autocomplete="off">
+      </div>
+    </div>
+    <div class="card-acts">
+      <button class="btn btn--quiet" data-close>Cancel</button>
+      <button class="btn btn--go" id="saveTrainer">Create trainer</button>
+    </div>
+  `, "card--slim");
 
+  const field = document.getElementById("fTrainer");
+  field.focus();
+  const commit = () => {
+    const name = field.value.trim();
+    if (!name){
+      showFieldError(field, "trainerErr", "Give the trainer a name so you can tell the collections apart.");
+      return;
+    }
+    const t = { id: uid("tr"), name };
+    app.trainers.push(t);
+    saveTrainers();
+    app.trainerId = t.id;
+    Vault.write("active-trainer", t.id);
+    loadBook();
+    app.openBinderId = null;
+    app.wireWith = null;
+    closeDialog();
+    renderDeskbar();
+    renderTabs();
+    renderStage();
+    cry(name + " added — now the active trainer");
+  };
+  document.getElementById("saveTrainer").addEventListener("click", commit);
+  field.addEventListener("keydown", (e) => { if (e.key === "Enter") commit(); });
+}
+
+/* ══════════════════════ binders ══════════════════════ */
+function renderBinders(stage){
   if (app.openBinderId) return renderBinderPlate(stage);
 
   stage.innerHTML = `
     <h2 class="sr-only">Binders</h2>
     <div class="rack">
-      <p class="count-note" style="flex:1;">${binders.length} ${plural(binders.length, "binder", "binders")} · ${esc(me.display_name)}</p>
+      <p class="count-note" style="flex:1;">${app.binders.length} ${plural(app.binders.length, "binder", "binders")} · ${esc(activeTrainer().name)}</p>
       <button class="btn btn--go" id="newBinder">New binder</button>
     </div>
     <div id="binderOut"></div>
@@ -1816,23 +1689,23 @@ async function renderBinders(stage){
   document.getElementById("newBinder").addEventListener("click", openBinderDialog);
 
   const out = document.getElementById("binderOut");
-  if (binders.length === 0){
-    out.innerHTML = `<div class="blank"><h3>No binders yet</h3><p>A binder groups Pokémon from your collection. Mark one tradeable and every other trainer can browse it and message you about it.</p></div>`;
+  if (app.binders.length === 0){
+    out.innerHTML = `<div class="blank"><h3>No binders yet</h3><p>A binder groups Pokémon from your collection. Mark one tradeable and every other trainer on this browser can browse it and message you about it.</p></div>`;
     return;
   }
-  out.innerHTML = `<ul class="binder-rack">${binders.map(b => `
+  out.innerHTML = `<ul class="binder-rack">${app.binders.map(b => `
     <li class="binder${b.tradeable ? " is-open" : ""}">
-      <h3><button type="button" class="binder-link" data-id="${b.id}"
-        aria-label="Open ${esc(b.name)}, ${b.pokemon_ids.length} ${plural(b.pokemon_ids.length,"entry","entries")}, ${b.tradeable ? "tradeable" : "private"}">${esc(b.name)}</button></h3>
+      <h3><button type="button" class="binder-link" data-id="${esc(b.id)}"
+        aria-label="Open ${esc(b.name)}, ${b.pokemonIds.length} ${plural(b.pokemonIds.length,"entry","entries")}, ${b.tradeable ? "tradeable" : "private"}">${esc(b.name)}</button></h3>
       <p class="b-note">${esc(b.description || "No description")}</p>
       <div class="b-foot">
-        <span class="b-count">${b.pokemon_ids.length} ${plural(b.pokemon_ids.length, "entry", "entries")}</span>
+        <span class="b-count">${b.pokemonIds.length} ${plural(b.pokemonIds.length, "entry", "entries")}</span>
         <span class="stamp ${b.tradeable ? "stamp--open" : "stamp--shut"}">${b.tradeable ? "Tradeable" : "Private"}</span>
       </div>
     </li>
   `).join("")}</ul>`;
   out.querySelectorAll(".binder-link").forEach(el => {
-    el.addEventListener("click", () => { app.openBinderId = Number(el.dataset.id); renderStage(); });
+    el.addEventListener("click", () => { app.openBinderId = el.dataset.id; renderStage(); });
   });
 }
 
@@ -1843,11 +1716,11 @@ function openBinderDialog(){
     <div class="fields">
       <div class="f">
         <label class="eyebrow" for="fBinderName">Name (required)</label>
-        <input class="txt" id="fBinderName" type="text" maxlength="60" placeholder="Shiny restricted legends" autocomplete="off">
+        <input class="txt" id="fBinderName" type="text" placeholder="Shiny restricted legends" autocomplete="off">
       </div>
       <div class="f">
         <label class="eyebrow" for="fBinderNote">Description</label>
-        <textarea class="txt" id="fBinderNote" maxlength="500" placeholder="optional"></textarea>
+        <textarea class="txt" id="fBinderNote" placeholder="optional"></textarea>
       </div>
       <label class="switch" for="fBinderTrade">
         <span><span class="s-lab">Tradeable</span><span class="s-sub">Other trainers can browse this binder</span></span>
@@ -1862,22 +1735,24 @@ function openBinderDialog(){
 
   const field = document.getElementById("fBinderName");
   field.focus();
-  document.getElementById("saveBinder").addEventListener("click", async () => {
+  document.getElementById("saveBinder").addEventListener("click", () => {
     const name = field.value.trim();
     if (!name){
       showFieldError(field, "binderErr", "Give the binder a name so you can find it later.");
       return;
     }
-    let made;
-    try{
-      made = await api("/binders", { method: "POST", body: {
-        name,
-        description: document.getElementById("fBinderNote").value.trim(),
-        tradeable: document.getElementById("fBinderTrade").checked
-      }});
-    }catch(err){ alarm(err.message); return; }
+    const binder = {
+      id: uid("bd"),
+      name,
+      description: document.getElementById("fBinderNote").value.trim(),
+      tradeable: document.getElementById("fBinderTrade").checked,
+      pokemonIds: []
+    };
+    app.binders.push(binder);
+    saveBook();
     closeDialog();
-    app.openBinderId = made.id;
+    app.openBinderId = binder.id;
+    renderTabs();
     renderStage();
     cry("Binder created");
   });
@@ -1886,7 +1761,7 @@ function openBinderDialog(){
 function renderBinderPlate(stage){
   const binder = app.binders.find(b => b.id === app.openBinderId);
   if (!binder){ app.openBinderId = null; return renderBinders(stage); }
-  const held = app.roster.filter(p => binder.pokemon_ids.includes(p.id));
+  const held = app.roster.filter(p => binder.pokemonIds.includes(p.id));
 
   stage.innerHTML = `
     <button class="backlink" id="backBinders"><span aria-hidden="true">←</span> All binders</button>
@@ -1902,21 +1777,17 @@ function renderBinderPlate(stage){
         <button class="btn btn--peril" id="binBinder">Delete binder</button>
       </div>
     </div>
-    <p class="count-note" role="status" aria-live="polite">${held.length} ${plural(held.length, "entry", "entries")} · ${binder.tradeable ? "visible to other trainers" : "private to " + esc(me.display_name)}</p>
+    <p class="count-note" role="status" aria-live="polite">${held.length} ${plural(held.length, "entry", "entries")} · ${binder.tradeable ? "visible to other trainers" : "private to " + esc(activeTrainer().name)}</p>
     <div id="plateOut"></div>
   `;
 
   document.getElementById("backBinders").addEventListener("click", () => { app.openBinderId = null; renderStage(); });
-  document.getElementById("tradeFlag").addEventListener("change", async (e) => {
-    const on = e.target.checked;
-    try{
-      await api(`/binders/${binder.id}`, { method: "PUT", body: {
-        name: binder.name, description: binder.description, tradeable: on
-      }});
-    }catch(err){ e.target.checked = !on; alarm(err.message); return; }
-    binder.tradeable = on;
+  document.getElementById("tradeFlag").addEventListener("change", (e) => {
+    binder.tradeable = e.target.checked;
+    saveBook();
     renderStage();
-    cry(on ? "Other trainers can now browse this binder" : "Binder is private again");
+    document.getElementById("tradeFlag").focus();
+    cry(binder.tradeable ? "Other trainers can now browse this binder" : "Binder is private again");
   });
   document.getElementById("fileIn").addEventListener("click", () => openFileInDialog(binder));
   document.getElementById("binBinder").addEventListener("click", () => {
@@ -1924,10 +1795,11 @@ function renderBinderPlate(stage){
       title: "Delete " + binder.name + "?",
       body: "The binder goes away. The " + held.length + " Pokémon inside stay in your collection.",
       go: "Delete binder",
-      async onGo(){
-        try{ await api(`/binders/${binder.id}`, { method: "DELETE" }); }
-        catch(err){ alarm(err.message); return; }
+      onGo(){
+        app.binders = app.binders.filter(b => b.id !== binder.id);
+        saveBook();
         app.openBinderId = null;
+        renderTabs();
         renderStage();
         cry("Binder deleted");
       }
@@ -1944,7 +1816,7 @@ function renderBinderPlate(stage){
 }
 
 function openFileInDialog(binder){
-  const spare = app.roster.filter(p => !binder.pokemon_ids.includes(p.id));
+  const spare = app.roster.filter(p => !binder.pokemonIds.includes(p.id));
   openDialog(`
     <h2 id="dlgTitle">File into ${esc(binder.name)}</h2>
     <p class="card-sub" id="dlgDesc">${spare.length ? "Pick from the rest of your collection." : "Nothing left to add."}</p>
@@ -1953,10 +1825,10 @@ function openFileInDialog(binder){
       : `<fieldset style="border:0;padding:0;margin:0;">
           <legend class="sr-only">Pokémon to file in</legend>
           <ul class="picker" id="pickBox">${spare.map(p => {
-            const art = safeUrl(p.shiny ? (p.art_shiny || p.art) : p.art);
+            const art = safeUrl(p.shiny ? (p.artShiny || p.art) : p.art);
             const cid = "pick-" + p.id;
-            return `<li><label class="pick" for="${cid}">
-              <input type="checkbox" id="${cid}" value="${p.id}">
+            return `<li><label class="pick" for="${esc(cid)}">
+              <input type="checkbox" id="${esc(cid)}" value="${esc(p.id)}">
               ${art ? `<img src="${art}" alt="" loading="lazy">` : `<span class="no-art" style="font-size:0.9375rem;width:30px;text-align:center;" aria-hidden="true">${esc((p.species || "?").slice(0,2))}</span>`}
               <span class="pk-name">${esc(labelFor(p))}</span>
               ${p.shiny ? `<span class="tag" style="border-color:var(--foil-4);">Shiny</span>` : ""}
@@ -1971,20 +1843,18 @@ function openFileInDialog(binder){
 
   const go = document.getElementById("doFile");
   if (!go) return;
-  go.addEventListener("click", async () => {
-    const picked = Array.from(document.querySelectorAll("#pickBox input:checked")).map(i => Number(i.value));
+  go.addEventListener("click", () => {
+    const picked = Array.from(document.querySelectorAll("#pickBox input:checked")).map(i => i.value);
     if (picked.length === 0){
       alarm("Select at least one Pokémon before filing.");
       document.querySelector("#pickBox input")?.focus();
       return;
     }
-    try{
-      await api(`/binders/${binder.id}/pokemon`, { method: "PUT",
-        body: { pokemon_ids: binder.pokemon_ids.concat(picked) } });
-    }catch(err){ alarm(err.message); return; }
+    binder.pokemonIds = binder.pokemonIds.concat(picked);
+    saveBook();
     closeDialog();
     renderStage();
-    cry(`${picked.length} Pokémon filed into ${binder.name}`);
+    cry(`${picked.length} ${plural(picked.length, "Pokémon", "Pokémon")} filed into ${binder.name}`);
   });
 }
 
@@ -2018,48 +1888,47 @@ function renderTrade(stage){
   else paintWire(out);
 }
 
-async function paintBrowse(out){
-  const seq = ++paintSeq;
-  out.innerHTML = `<p class="count-note">Loading tradeable binders…</p>`;
-  let tradeBinders;
-  try{
-    tradeBinders = await api("/trade/binders");
-  }catch(err){
-    if (seq === paintSeq) stageFailed(out, err);
-    return;
-  }
-  if (seq !== paintSeq) return;
+function otherTrainers(){ return app.trainers.filter(t => t.id !== app.trainerId); }
 
-  if (tradeBinders.length === 0){
-    out.innerHTML = `<div class="blank"><h3>Nothing on offer</h3><p>No other trainer has a tradeable binder with Pokémon in it yet. When someone marks one tradeable, it shows up here.</p></div>`;
+function paintBrowse(out){
+  const others = otherTrainers();
+  if (others.length === 0){
+    out.innerHTML = `<div class="blank"><h3>You're the only trainer here</h3><p>Add a second trainer from the top of the page to browse binders and trade between them.</p></div>`;
     return;
   }
 
-  // Group by owner for display.
-  const groups = new Map();
-  for (const b of tradeBinders){
-    if (!groups.has(b.owner.id)) groups.set(b.owner.id, { owner: b.owner, binders: [] });
-    groups.get(b.owner.id).binders.push(b);
+  const shelves = others.map(t => {
+    const book = bookFor(t.id);
+    const open = book.binders.filter(b => b.tradeable && b.pokemonIds.length > 0);
+    return {
+      trainer: t,
+      binders: open.map(b => ({ ...b, held: book.roster.filter(p => b.pokemonIds.includes(p.id)) }))
+    };
+  }).filter(s => s.binders.length > 0);
+
+  if (shelves.length === 0){
+    out.innerHTML = `<div class="blank"><h3>Nothing on offer</h3><p>No other trainer has a tradeable binder with Pokémon in it yet. Switch trainers, open a binder, and turn on Tradeable.</p></div>`;
+    return;
   }
 
-  out.innerHTML = Array.from(groups.values()).map(g => `
-    <section class="trader" aria-labelledby="tr-${g.owner.id}">
+  out.innerHTML = shelves.map(s => `
+    <section class="trader" aria-labelledby="tr-${esc(s.trainer.id)}">
       <div class="trader-top">
         <div>
           <p class="eyebrow">Trainer</p>
-          <h3 id="tr-${g.owner.id}">${esc(g.owner.display_name)}</h3>
+          <h3 id="tr-${esc(s.trainer.id)}">${esc(s.trainer.name)}</h3>
         </div>
-        <button class="btn btn--sm" data-open-wire="${g.owner.id}" aria-label="Message ${esc(g.owner.display_name)}">Message</button>
+        <button class="btn btn--sm" data-open-wire="${esc(s.trainer.id)}" aria-label="Message ${esc(s.trainer.name)}">Message</button>
       </div>
       <ul class="trader-shelf">
-        ${g.binders.map(b => `
+        ${s.binders.map(b => `
           <li class="shelf-row">
             <div>
               <div class="s-name">${esc(b.name)}</div>
-              <div class="s-sub">${b.pokemon.length} ${plural(b.pokemon.length, "entry", "entries")} · ${b.pokemon.filter(p => p.shiny).length} shiny</div>
+              <div class="s-sub">${b.held.length} ${plural(b.held.length, "entry", "entries")} · ${b.held.filter(p => p.shiny).length} shiny</div>
             </div>
-            <button class="btn btn--sm" data-ask="${g.owner.id}|${b.id}"
-              aria-label="Ask ${esc(g.owner.display_name)} about ${esc(b.name)}">Ask about this</button>
+            <button class="btn btn--sm" data-ask="${esc(s.trainer.id)}|${esc(b.id)}"
+              aria-label="Ask ${esc(s.trainer.name)} about ${esc(b.name)}">Ask about this</button>
           </li>
         `).join("")}
       </ul>
@@ -2067,94 +1936,80 @@ async function paintBrowse(out){
   `).join("");
 
   out.querySelectorAll("[data-open-wire]").forEach(btn => {
-    btn.addEventListener("click", () => startWire(Number(btn.dataset.openWire), null));
+    btn.addEventListener("click", () => startWire(btn.dataset.openWire, null));
   });
   out.querySelectorAll("[data-ask]").forEach(btn => {
     btn.addEventListener("click", () => {
-      const [ownerId, binderId] = btn.dataset.ask.split("|").map(Number);
-      const g = groups.get(ownerId);
-      const binder = g?.binders.find(b => b.id === binderId);
+      const [tid, bid] = btn.dataset.ask.split("|");
+      const shelf = shelves.find(s => s.trainer.id === tid);
+      const binder = shelf?.binders.find(b => b.id === bid);
       if (!binder) return;
-      startWire(ownerId, {
+      startWire(tid, {
         name: binder.name,
-        count: binder.pokemon.length,
-        art: binder.pokemon.find(p => p.art)?.art || null
+        count: binder.held.length,
+        art: binder.held.find(p => p.art)?.art || null
       });
     });
   });
 }
 
-function startWire(peerId, clip){
-  app.wireWith = peerId;
+function startWire(trainerId, clip){
+  app.wireWith = trainerId;
   app.draftClip = clip;
   app.tradeView = "wire";
   renderTrade(document.getElementById("stage"));
+  document.getElementById("wireInput")?.focus();
 }
 
-async function paintWire(out){
-  const seq = ++paintSeq;
-  out.innerHTML = `<p class="count-note">Loading conversations…</p>`;
-  let convs, others;
-  try{
-    [convs, others] = await Promise.all([api("/conversations"), api("/accounts")]);
-  }catch(err){
-    if (seq === paintSeq) stageFailed(out, err);
-    return;
-  }
-  if (seq !== paintSeq) return;
-
+function paintWire(out){
+  const others = otherTrainers();
   if (others.length === 0){
-    out.innerHTML = `<div class="blank"><h3>Nobody to message</h3><p>You're the only trainer registered on this server so far. When someone else creates an account, you can message them here.</p></div>`;
+    out.innerHTML = `<div class="blank"><h3>Nobody to message</h3><p>Add a second trainer from the top of the page to start a conversation.</p></div>`;
     return;
   }
 
-  const started = new Set(convs.map(c => c.account.id));
-  const fresh = others.filter(o => !started.has(o.id));
+  const threads = others.map(t => {
+    const notes = readWire(t.id);
+    const last = notes[notes.length - 1];
+    return {
+      id: t.id,
+      name: t.name,
+      preview: last ? (last.text || (last.clip ? "Shared a binder" : "")) : "No messages yet",
+      count: notes.length,
+      when: last ? last.at : 0
+    };
+  }).sort((a, b) => b.when - a.when);
 
   out.innerHTML = `
     <div class="post">
-      <div class="post-side">
-        <button class="btn btn--sm" id="refreshWire" aria-label="Refresh conversations">Refresh</button>
-        <nav aria-label="Conversations">
-          <ul class="post-list">
-            ${convs.map(c => `
-              <li><button type="button" class="post-item" data-wire="${c.account.id}"
-                aria-current="${app.wireWith === c.account.id}"
-                aria-label="${esc(c.account.display_name)}${c.unread ? `, ${c.unread} unread` : ""}">
-                <span class="pi-top">
-                  <span class="pi-name">${esc(c.account.display_name)}</span>
-                  ${c.unread ? `<span class="unread-pip" data-pip="${c.account.id}" aria-hidden="true">${c.unread}</span>` : ""}
-                </span>
-                <span class="pi-last">${esc(c.last_message || "")}</span>
-              </button></li>
-            `).join("")}
-            ${fresh.map(o => `
-              <li><button type="button" class="post-item" data-wire="${o.id}"
-                aria-current="${app.wireWith === o.id}"
-                aria-label="${esc(o.display_name)}, no messages yet">
-                <span class="pi-top"><span class="pi-name">${esc(o.display_name)}</span></span>
-                <span class="pi-last">Start a conversation</span>
-              </button></li>
-            `).join("")}
-          </ul>
-        </nav>
-      </div>
+      <nav aria-label="Conversations">
+        <ul class="post-list">
+          ${threads.map(t => `
+            <li><button type="button" class="post-item" data-wire="${esc(t.id)}"
+              aria-current="${app.wireWith === t.id}"
+              aria-label="${esc(t.name)}, ${t.count} ${plural(t.count, "message", "messages")}">
+              <span class="pi-name">${esc(t.name)}</span>
+              <span class="pi-last">${esc(t.preview)}</span>
+            </button></li>
+          `).join("")}
+        </ul>
+      </nav>
       <div class="wire" id="wireBox"></div>
     </div>
   `;
-  document.getElementById("refreshWire").addEventListener("click", () => paintWire(out));
   out.querySelectorAll("[data-wire]").forEach(btn => {
     btn.addEventListener("click", () => {
-      app.wireWith = Number(btn.dataset.wire);
+      app.wireWith = btn.dataset.wire;
       app.draftClip = null;
       paintWire(out);
+      document.getElementById("wireInput")?.focus();
     });
   });
 
-  paintThread(others.concat(convs.map(c => c.account)));
+  paintThread();
 }
 
-async function paintThread(known){
+function paintThread(){
   const box = document.getElementById("wireBox");
   if (!box) return;
 
@@ -2163,42 +2018,32 @@ async function paintThread(known){
     return;
   }
 
-  const peer = known.find(a => a.id === app.wireWith);
-  const who = peer ? peer.display_name : "trainer";
-  box.innerHTML = `<p class="wire-blank">Loading…</p>`;
-
-  let msgs;
-  try{
-    msgs = await api(`/messages/${app.wireWith}?limit=200`);
-  }catch(err){
-    box.innerHTML = `<p class="wire-blank">${esc(err.message)}</p>`;
-    return;
-  }
+  const who = trainerName(app.wireWith);
+  const notes = readWire(app.wireWith);
 
   box.innerHTML = `
     <ul class="wire-log" id="wireLog" aria-label="Messages with ${esc(who)}" aria-live="polite">
-      ${msgs.length === 0
+      ${notes.length === 0
         ? `<li class="wire-blank">No messages with ${esc(who)} yet. Open with what you're after.</li>`
-        : msgs.map(n => {
-            const mine = n.sender_id === me.id;
-            const clip = n.attachment;
-            const art = safeUrl(clip?.art);
+        : notes.map(n => {
+            const mine = n.from === app.trainerId;
+            const art = safeUrl(n.clip?.art);
             const sender = mine ? "You" : who;
             return `<li class="note ${mine ? "from-me" : "from-them"}">
               <span class="sr-only">${esc(sender)} said:</span>
-              ${clip && clip.name ? `<div class="clip">
+              ${n.clip ? `<div class="clip">
                 ${art ? `<img src="${art}" alt="" loading="lazy">` : ""}
-                <span class="c-txt"><strong>Binder: ${esc(clip.name)}</strong><span class="c-sub">${Number(clip.count) || 0} ${plural(Number(clip.count) || 0, "entry", "entries")}</span></span>
+                <span class="c-txt"><strong>Binder: ${esc(n.clip.name)}</strong><span class="c-sub">${n.clip.count} ${plural(n.clip.count, "entry", "entries")}</span></span>
               </div>` : ""}
-              ${n.body ? `<div class="note-body">${esc(n.body)}</div>` : ""}
-              <span class="note-when">${new Date(n.created_at).toLocaleString()}</span>
+              ${n.text ? `<div class="note-body">${esc(n.text)}</div>` : ""}
+              <span class="note-when">${new Date(n.at).toLocaleString()}</span>
             </li>`;
           }).join("")}
     </ul>
     <div id="clipDraft"></div>
     <div class="wire-desk">
       <label class="sr-only" for="wireInput">Message ${esc(who)}</label>
-      <input class="txt" id="wireInput" type="text" maxlength="2000" placeholder="Message ${esc(who)}…" autocomplete="off">
+      <input class="txt" id="wireInput" type="text" placeholder="Message ${esc(who)}…" autocomplete="off">
       <button class="btn btn--go" id="wireSend">Send</button>
     </div>
   `;
@@ -2211,14 +2056,6 @@ async function paintThread(known){
     if (e.key === "Enter") sendNote();
   });
   paintClipDraft();
-
-  // Anything they sent is now read; zero the sidebar badge in place.
-  const hadUnread = msgs.some(m => m.sender_id === app.wireWith && !m.read_at);
-  if (hadUnread){
-    api(`/conversations/${app.wireWith}/read`, { method: "POST" })
-      .then(() => document.querySelector(`[data-pip="${app.wireWith}"]`)?.remove())
-      .catch(() => { /* badge clears on next refresh */ });
-  }
 }
 
 function paintClipDraft(){
@@ -2242,7 +2079,7 @@ function paintClipDraft(){
   });
 }
 
-async function sendNote(){
+function sendNote(){
   const input = document.getElementById("wireInput");
   const text = input.value.trim();
   if (!text && !app.draftClip){
@@ -2251,230 +2088,14 @@ async function sendNote(){
     return;
   }
 
-  const btn = document.getElementById("wireSend");
-  btn.disabled = true;
-  try{
-    await api("/messages", { method: "POST", body: {
-      to: app.wireWith,
-      body: text,
-      attachment: app.draftClip || null
-    }});
-  }catch(err){
-    alarm(err.message);
-    btn.disabled = false;
-    return;
-  }
-  app.draftClip = null;
-  const out = document.getElementById("tradeOut");
-  await paintWire(out);
-  document.getElementById("wireInput")?.focus();
-}
+  const notes = readWire(app.wireWith);
+  notes.push({ from: app.trainerId, text, clip: app.draftClip, at: Date.now() });
+  if (!writeWire(app.wireWith, notes)) return;
 
-/* ══════════════════════ export / import ══════════════════════ */
-const EXPORT_FORMAT = "vgc-binder-account";
-
-async function exportBackup(){
-  let roster, binders;
-  try{
-    [roster, binders] = await Promise.all([api("/pokemon"), api("/binders")]);
-  }catch(err){ alarm(err.message); return; }
-
-  const payload = {
-    format: EXPORT_FORMAT,
-    version: 2,
-    exported_at: new Date().toISOString(),
-    account: { username: me.username, display_name: me.display_name },
-    pokemon: roster,
-    binders: binders.map(b => ({
-      name: b.name, description: b.description,
-      tradeable: b.tradeable, pokemon_ids: b.pokemon_ids
-    }))
-  };
-  const stamp = new Date().toISOString().slice(0, 10);
-  const name = `vgc-binder-${me.username}-${stamp}.json`;
-  let url;
-  try{
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-    url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = name;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  }catch(err){
-    alarm("Export failed — this browser blocked the download.");
-    return;
-  }finally{
-    if (url) setTimeout(() => URL.revokeObjectURL(url), 2000);
-  }
-  cry(`Exported ${name} — ${roster.length} Pokémon, ${binders.length} ${plural(binders.length, "binder", "binders")}.`);
-}
-
-function pickImportFile(){
-  const input = document.getElementById("importFile");
   input.value = "";
-  input.click();
-}
-
-function parseLevel(v){
-  const n = parseInt(v, 10);
-  return Number.isInteger(n) && n >= 1 && n <= 100 ? n : null;
-}
-function httpsOrNull(u){
-  return typeof u === "string" && u.startsWith("https://") ? u.slice(0, 300) : null;
-}
-
-/* v1 exports (the old localStorage app) used camelCase; map to API fields. */
-function mapV1(p){
-  return {
-    species: String(p.species || "").trim().toLowerCase(),
-    nickname: String(p.nickname || "").slice(0, 40),
-    shiny: Boolean(p.shiny),
-    mark: (p.mark && p.mark !== "None") ? String(p.mark).slice(0, 40) : "",
-    ribbon: String(p.ribbon || "").slice(0, 64),
-    origin_game: String(p.originGame || "").slice(0, 40),
-    tera_type: String(p.teraType || "").slice(0, 20),
-    ball: String(p.ball || "").slice(0, 40),
-    level: parseLevel(p.level),
-    nature: String(p.nature || "").slice(0, 20),
-    ability: String(p.ability || "").slice(0, 40),
-    ot: String(p.ot || "").slice(0, 40),
-    language: String(p.language || "").slice(0, 20),
-    notes: String(p.notes || "").slice(0, 2000),
-    dex_id: Number.isInteger(p.dexId) ? p.dexId : null,
-    art: httpsOrNull(p.art),
-    art_shiny: httpsOrNull(p.artShiny)
-  };
-}
-
-/* v2 exports are already API-shaped; keep only fields the API accepts. */
-function mapV2(p){
-  return {
-    species: String(p.species || "").trim().toLowerCase(),
-    nickname: String(p.nickname || "").slice(0, 40),
-    shiny: Boolean(p.shiny),
-    mark: String(p.mark || "").slice(0, 40),
-    ribbon: String(p.ribbon || "").slice(0, 64),
-    origin_game: String(p.origin_game || "").slice(0, 40),
-    tera_type: String(p.tera_type || "").slice(0, 20),
-    ball: String(p.ball || "").slice(0, 40),
-    level: parseLevel(p.level),
-    nature: String(p.nature || "").slice(0, 20),
-    ability: String(p.ability || "").slice(0, 40),
-    ot: String(p.ot || "").slice(0, 40),
-    language: String(p.language || "").slice(0, 20),
-    notes: String(p.notes || "").slice(0, 2000),
-    dex_id: Number.isInteger(p.dex_id) ? p.dex_id : null,
-    art: httpsOrNull(p.art),
-    art_shiny: httpsOrNull(p.art_shiny)
-  };
-}
-
-function handleImportFile(file){
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onerror = () => alarm("Couldn't read that file.");
-  reader.onload = () => {
-    let data;
-    try{ data = JSON.parse(String(reader.result)); }
-    catch(err){
-      alarm("That file isn't valid JSON, so there's nothing to import.");
-      return;
-    }
-
-    let entries = [];      // [{oldId, payload}]
-    let binderSpecs = [];  // [{name, description, tradeable, oldIds}]
-
-    if (data && data.format === EXPORT_FORMAT && Array.isArray(data.pokemon)){
-      entries = data.pokemon.map(p => ({ oldId: p.id ?? null, payload: mapV2(p) }));
-      binderSpecs = (data.binders || []).map(b => ({
-        name: String(b.name || "Imported binder").slice(0, 60),
-        description: String(b.description || "").slice(0, 500),
-        tradeable: Boolean(b.tradeable),
-        oldIds: Array.isArray(b.pokemon_ids) ? b.pokemon_ids : []
-      }));
-    } else if (data && data.format === "vgc-binder" && data.books){
-      // v1 multi-trainer export: merge every trainer's book into this account.
-      for (const book of Object.values(data.books)){
-        for (const p of (book.roster || [])){
-          entries.push({ oldId: p.id ?? null, payload: mapV1(p) });
-        }
-        for (const b of (book.binders || [])){
-          binderSpecs.push({
-            name: String(b.name || "Imported binder").slice(0, 60),
-            description: String(b.description || "").slice(0, 500),
-            tradeable: Boolean(b.tradeable),
-            oldIds: Array.isArray(b.pokemonIds) ? b.pokemonIds : []
-          });
-        }
-      }
-    } else {
-      alarm("That's not a VGC Binder export. Use a file saved by the Export button.");
-      return;
-    }
-
-    entries = entries.filter(e => e.payload.species);
-    if (entries.length === 0 && binderSpecs.length === 0){
-      alarm("That export has nothing in it to import.");
-      return;
-    }
-    confirmImport(entries, binderSpecs, file.name);
-  };
-  reader.readAsText(file);
-}
-
-function confirmImport(entries, binderSpecs, filename){
-  openDialog(`
-    <h2 id="dlgTitle">Import ${esc(filename)}?</h2>
-    <p class="card-sub" id="dlgDesc">Everything is <strong>added</strong> to ${esc(me.display_name)}'s account — nothing you already have is touched.</p>
-    <ul class="summary-list">
-      <li><span class="fig">${entries.length}</span><span class="eyebrow">Pokémon</span></li>
-      <li><span class="fig">${binderSpecs.length}</span><span class="eyebrow">${plural(binderSpecs.length, "Binder", "Binders")}</span></li>
-    </ul>
-    <div class="card-acts">
-      <button class="btn btn--quiet" data-close>Cancel</button>
-      <button class="btn btn--go" id="doImport">Add to my collection</button>
-    </div>
-  `, "card--slim");
-
-  document.getElementById("doImport").addEventListener("click", async () => {
-    const btn = document.getElementById("doImport");
-    btn.disabled = true;
-
-    const idMap = new Map();   // old export id -> new server id
-    let made = 0, failed = 0;
-    for (const e of entries){
-      btn.textContent = `Importing ${made + failed + 1} of ${entries.length}…`;
-      try{
-        const row = await api("/pokemon", { method: "POST", body: e.payload });
-        if (e.oldId !== null) idMap.set(e.oldId, row.id);
-        made++;
-      }catch(err){ failed++; }
-    }
-
-    let bindersMade = 0;
-    for (const spec of binderSpecs){
-      try{
-        const b = await api("/binders", { method: "POST", body: {
-          name: spec.name, description: spec.description, tradeable: spec.tradeable
-        }});
-        const ids = spec.oldIds.map(o => idMap.get(o)).filter(Boolean);
-        if (ids.length){
-          await api(`/binders/${b.id}/pokemon`, { method: "PUT", body: { pokemon_ids: ids } });
-        }
-        bindersMade++;
-      }catch(err){ /* counted below by omission */ }
-    }
-
-    closeDialog();
-    app.tab = "collection";
-    renderTabs();
-    renderStage();
-    const summary = `Imported ${made} Pokémon and ${bindersMade} ${plural(bindersMade, "binder", "binders")}.`;
-    if (failed) alarm(`${summary} ${failed} ${plural(failed, "entry", "entries")} couldn't be saved.`);
-    else cry(summary);
-  });
+  app.draftClip = null;
+  paintWire(document.getElementById("tradeOut"));
+  document.getElementById("wireInput")?.focus();
 }
 
 /* ══════════════════════ dialog plumbing ══════════════════════ */
@@ -2534,20 +2155,20 @@ function askConfirm({ title, body, go, onGo }){
 }
 
 /* ══════════════════════ boot ══════════════════════ */
+function boot(){
+  loadTrainers();
+  loadActiveTrainer();
+  loadBook();
+  renderDeskbar();
+  renderTabs();
+  renderStage();
+  ensureSpeciesIndex();
+}
+
 document.getElementById("importFile").addEventListener("change", (e) => {
   handleImportFile(e.target.files && e.target.files[0]);
 });
 
-async function boot(){
-  if (storedRefresh() && await tryRefresh()){
-    try{
-      me = await api("/me");
-      enterApp();
-      return;
-    }catch(err){ /* fall through to the gate */ }
-  }
-  enterGate();
-}
 boot();
 </script>
 
