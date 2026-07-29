@@ -92,14 +92,14 @@ bearer access token.
 
 ## Frontend
 
-`../vgc-binder.html` is wired to this API: login/register gate, server-side
+`../self-hosted.html` is wired to this API: login/register gate, server-side
 collection, binders, trade browsing, and messaging with unread counts. It keeps the
 access token in memory and the refresh token in localStorage (so a browser restart
 doesn't sign you out), retrying a 401 once through `/auth/refresh` before showing
 the login screen. Its Export button downloads your account as JSON; Import
 *adds* a backup's contents to your account and also understands the old
 localStorage-era `vgc-binder` v1 export format. The pre-API standalone version is
-preserved as `../vgc-binder-local.html`.
+preserved as `../demo.html`, and `../index.html` is the portfolio page.
 
 ## Before this faces the internet
 
