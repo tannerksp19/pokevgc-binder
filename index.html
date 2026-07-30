@@ -368,36 +368,6 @@ ul{ margin: 0; padding: 0; }
   letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3);
 }
 
-/* ═══════════════ placeholders the owner must fill ═══════════════ */
-.todo{
-  border: 2px dashed var(--warn);
-  background: var(--warn-wash);
-  border-radius: 3px;
-  padding: 16px 18px;
-  margin-top: 14px;
-}
-.todo .flag{
-  display: inline-flex; align-items: center; gap: 6px;
-  font-family: var(--mono); font-size: 0.6875rem; font-weight: 700;
-  letter-spacing: .1em; text-transform: uppercase;
-  color: var(--warn);
-  margin-bottom: 7px;
-}
-.todo p{ font-size: 0.875rem; color: var(--ink-2); }
-.todo p + p{ margin-top: 7px; }
-
-.slots{
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(258px, 1fr));
-  gap: 14px; margin-top: 20px; list-style: none;
-}
-.slot{
-  border: 1px dashed var(--rule);
-  border-radius: 3px;
-  padding: 20px 18px;
-  background: color-mix(in srgb, var(--sleeve) 45%, transparent);
-}
-.slot h3{ font-size: 1rem; margin: 8px 0 6px; color: var(--ink-2); }
-.slot p{ font-size: 0.8125rem; color: var(--ink-3); }
 
 /* ═══════════════ footer ═══════════════ */
 footer{
@@ -617,39 +587,6 @@ footer a{ font-weight: 600; }
           <li class="metric"><span class="fig">2</span><span class="lab">Deploy modes</span></li>
         </ul>
       </article>
-    </div>
-  </section>
-
-  <!-- ═══════════ future work slots ═══════════ -->
-  <section class="band" aria-labelledby="more-h">
-    <div class="wrap">
-      <p class="eyebrow">In progress</p>
-      <h2 id="more-h">More work, coming</h2>
-      <p class="band-lede">
-        Two of the three focus areas above don't have a project attached yet. These are
-        honest placeholders — a portfolio claiming breadth it can't show is worse than one
-        that names the gap.
-      </p>
-      <ul class="slots">
-        <li class="slot">
-          <p class="eyebrow">Slot 02</p>
-          <h3>A data project</h3>
-          <p>
-            Analysis, a model, a pipeline, or a dashboard — something with a dataset, a
-            question, and a result. Replace this card when there's one to link.
-          </p>
-        </li>
-        <li class="slot">
-          <p class="eyebrow">Slot 03</p>
-          <h3>A generative-AI business solution</h3>
-          <p>
-            The natural companion to the certificate: a workflow where LLM tooling
-            measurably saved time, with the before-and-after to back it up.
-          </p>
-        </li>
-      </ul>
-      <!-- FILL IN: replace the two .slot cards above with real projects as they land,
-           then delete this whole section once both are done. -->
     </div>
   </section>
 
