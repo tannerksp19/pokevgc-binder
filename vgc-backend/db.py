@@ -106,8 +106,49 @@ def connect() -> sqlite3.Connection:
     return conn
 
 
+# Paired releases used to be separate options. Rows written back then still hold a
+# single version, which no longer matches anything the client offers — so they'd be
+# unfilterable and would silently change on the next edit. Folding them onto the
+# combined label fixes that in place.
+ORIGIN_GAME_MERGES = {
+    "Scarlet": "Scarlet / Violet",
+    "Violet": "Scarlet / Violet",
+    "Sword": "Sword / Shield",
+    "Shield": "Sword / Shield",
+    "Brilliant Diamond": "Brilliant Diamond / Shining Pearl",
+    "Shining Pearl": "Brilliant Diamond / Shining Pearl",
+    "Sun": "Sun / Moon",
+    "Moon": "Sun / Moon",
+    "Ultra Sun": "Ultra Sun / Ultra Moon",
+    "Ultra Moon": "Ultra Sun / Ultra Moon",
+    "Let's Go Pikachu": "Let's Go Pikachu / Eevee",
+    "Let's Go Eevee": "Let's Go Pikachu / Eevee",
+    # renamed so " / " means "release pair" everywhere and nothing else
+    "HOME / transferred": "HOME (transferred)",
+}
+
+
+def merge_paired_origin_games(conn: sqlite3.Connection) -> int:
+    """Fold single-version origins onto their release pair. Idempotent.
+
+    Only touches exact legacy labels, so anything already combined — or any value
+    we don't recognise — is left alone rather than coerced.
+    """
+    changed = 0
+    for legacy, combined in ORIGIN_GAME_MERGES.items():
+        cur = conn.execute(
+            "UPDATE pokemon SET origin_game = ? WHERE origin_game = ?", (combined, legacy)
+        )
+        changed += cur.rowcount
+    return changed
+
+
 def init_db() -> None:
-    """Create tables if they don't exist. Safe to call on every startup."""
+    """Create tables if they don't exist, then run data migrations.
+
+    Safe to call on every startup; each step is idempotent.
+    """
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     with connect() as conn:
         conn.executescript(SCHEMA)
+        merge_paired_origin_games(conn)
