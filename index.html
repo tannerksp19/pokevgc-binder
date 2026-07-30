@@ -213,28 +213,52 @@ ul{ margin: 0; padding: 0; }
   letter-spacing: .1em; color: var(--accent);
 }
 
-/* ═══════════════ credential ═══════════════ */
+/* ═══════════════ credential ═══════════════
+   Tone is a single pair of custom properties: amber while a credential is in
+   progress, green once earned. Add .cred--done to flip it — nothing else. */
 .cred{
+  --cred-tone: var(--warn);
+  --cred-wash: var(--warn-wash);
   display: flex; align-items: flex-start; gap: 16px;
   background: var(--sleeve);
   border: 1px solid var(--rule);
-  border-left: 4px solid var(--ok);
+  border-left: 4px solid var(--cred-tone);
   border-radius: 3px;
   padding: 18px 20px;
   margin-top: 22px;
   box-shadow: var(--shadow-lo);
 }
+.cred--done{ --cred-tone: var(--ok); --cred-wash: var(--ok-wash); }
 .cred-mark{
   flex: none; width: 42px; height: 42px;
   display: grid; place-items: center;
-  background: var(--ok-wash);
-  border: 1px solid color-mix(in srgb, var(--ok) 45%, transparent);
+  background: var(--cred-wash);
+  border: 1px solid color-mix(in srgb, var(--cred-tone) 45%, transparent);
   border-radius: 3px;
-  color: var(--ok);
+  color: var(--cred-tone);
 }
 .cred-mark svg{ width: 22px; height: 22px; }
-.cred h3{ font-size: 1.0625rem; margin-bottom: 4px; }
+.cred-body{ flex: 1; min-width: 0; }
+.cred h3{ font-size: 1.0625rem; margin-bottom: 5px; }
 .cred p{ font-size: 0.875rem; color: var(--ink-2); }
+.cred-where{
+  font-size: 0.875rem; font-weight: 600; color: var(--ink);
+  display: block; margin-bottom: 9px;
+}
+.cred-facts{
+  display: flex; flex-wrap: wrap; align-items: center; gap: 7px;
+  margin-bottom: 10px; list-style: none;
+}
+.cred-facts li{
+  font-family: var(--mono); font-size: 0.6875rem; letter-spacing: .02em;
+  padding: 3px 7px; border-radius: 2px;
+  border: 1px solid var(--rule); background: var(--sleeve-2); color: var(--ink-2);
+}
+.cred-facts li.is-status{
+  font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--cred-tone); background: var(--cred-wash);
+  border-color: color-mix(in srgb, var(--cred-tone) 50%, transparent);
+}
 
 /* ═══════════════ project ═══════════════ */
 .project{
@@ -459,7 +483,36 @@ footer a{ font-weight: 600; }
   </section>
 
   <!-- ═══════════ credential ═══════════ -->
-  
+  <section class="band" aria-labelledby="cred-h">
+    <div class="wrap">
+      <p class="eyebrow">Credentials</p>
+      <h2 id="cred-h">Certification</h2>
+      <!-- When the certificate is earned: add class "cred--done", swap the status
+           chip to "Completed [month year]", and link the verification URL. -->
+      <div class="cred">
+        <span class="cred-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="9" r="6"/><path d="m8.5 14.5-1.5 7 5-2.5 5 2.5-1.5-7"/><path d="m9.5 9 1.75 1.75L14.5 7.5"/></svg>
+        </span>
+        <div class="cred-body">
+          <h3>Post Graduate Program in Data Science with Generative AI: Applications to Business</h3>
+          <span class="cred-where">McCombs School of Business, The University of Texas at Austin</span>
+          <ul class="cred-facts">
+            <li class="is-status">In progress</li>
+            <li>7 months</li>
+            <li>8.5 CEUs</li>
+          </ul>
+          <p>
+            Eight modules: Python and exploratory data analysis, business statistics and
+            hypothesis testing, linear regression, classification, ensemble methods with
+            hyperparameter tuning, unsupervised learning, and SQL — plus a Generative AI
+            module on prompt engineering and applying large language models to text
+            classification and summarisation. Built around seven hands-on projects and
+            40-plus case studies.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- ═══════════ selected work ═══════════ -->
   <section class="band" aria-labelledby="work-h">
