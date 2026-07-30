@@ -1040,11 +1040,61 @@ async function api(path, { method = "GET", body, retry = true } = {}){
 }
 
 /* ══════════════════════ reference data ══════════════════════ */
+/* Paired releases are one entry: a Pokémon's provenance is the release pair, and
+   splitting them just doubled the list without telling you anything extra. */
 const ORIGIN_GAMES = [
-  "Scarlet","Violet","Sword","Shield","Brilliant Diamond","Shining Pearl",
-  "Legends: Arceus","Legends: Z-A","Sun","Moon","Ultra Sun","Ultra Moon",
-  "Let's Go Pikachu","Let's Go Eevee","HOME / transferred","Other"
+  "Scarlet / Violet",
+  "Sword / Shield",
+  "Brilliant Diamond / Shining Pearl",
+  "Legends: Arceus",
+  "Legends: Z-A",
+  "Sun / Moon",
+  "Ultra Sun / Ultra Moon",
+  "Let's Go Pikachu / Eevee",
+  "HOME (transferred)",
+  "Other"
 ];
+
+/* Records written before the pairs were merged — and anything coming out of an
+   older export — map onto the combined label, so they stay filterable and still
+   select the right option when edited. Unrecognised values pass through
+   untouched rather than being coerced into "Other" and losing information. */
+const ORIGIN_ALIASES = {
+  "Scarlet": "Scarlet / Violet",
+  "Violet": "Scarlet / Violet",
+  "Sword": "Sword / Shield",
+  "Shield": "Sword / Shield",
+  "Brilliant Diamond": "Brilliant Diamond / Shining Pearl",
+  "Shining Pearl": "Brilliant Diamond / Shining Pearl",
+  "Sun": "Sun / Moon",
+  "Moon": "Sun / Moon",
+  "Ultra Sun": "Ultra Sun / Ultra Moon",
+  "Ultra Moon": "Ultra Sun / Ultra Moon",
+  "Let's Go Pikachu": "Let's Go Pikachu / Eevee",
+  "Let's Go Eevee": "Let's Go Pikachu / Eevee",
+  /* renamed so " / " means "release pair" everywhere and nothing else */
+  "HOME / transferred": "HOME (transferred)"
+};
+function canonOrigin(v){
+  const s = String(v ?? "").trim();
+  return ORIGIN_ALIASES[s] || s;
+}
+
+/* Options for an origin <select>: the canonical list, plus the record's own value
+   if it's something off-list, so opening the editor can never silently rewrite it. */
+function originOptions(current){
+  const c = String(current ?? "").trim();
+  return (!c || ORIGIN_GAMES.includes(c)) ? ORIGIN_GAMES : ORIGIN_GAMES.concat(c);
+}
+
+/* Filter options also cover any off-list value the collection actually holds,
+   otherwise those entries would be impossible to filter down to. */
+function originFilterOptions(roster){
+  const extra = [...new Set((roster || [])
+    .map(p => String(p.origin_game ?? "").trim())
+    .filter(v => v && !ORIGIN_GAMES.includes(v)))].sort();
+  return ORIGIN_GAMES.concat(extra);
+}
 const MARKS = [
   "None","Rowdy Mark","Sturdy Mark","Rare Mark","Uncommon Mark","Alpha Mark",
   "Titan Mark","Jumbo Mark","Mini Mark","Gourmand Mark","Curious Mark",
@@ -1428,7 +1478,7 @@ async function renderCollection(stage){
       <label class="sr-only" for="originPick">Filter by origin game</label>
       <select class="txt" id="originPick">
         <option value="">Any origin</option>
-        ${ORIGIN_GAMES.map(g => `<option value="${esc(g)}"${app.filters.origin === g ? " selected" : ""}>${esc(g)}</option>`).join("")}
+        ${originFilterOptions(roster).map(g => `<option value="${esc(g)}"${app.filters.origin === g ? " selected" : ""}>${esc(g)}</option>`).join("")}
       </select>
       <label class="sr-only" for="markPick">Filter by mark</label>
       <select class="txt" id="markPick">
@@ -1598,6 +1648,9 @@ function openEntryDialog(existing){
     dex_id: null, art: null, art_shiny: null
   };
   const markSel = p.mark || "None";
+  /* alias first, so an entry saved as "Violet" opens on "Scarlet / Violet"
+     instead of falling through to the first option in the list */
+  const pOrigin = canonOrigin(p.origin_game);
 
   openDialog(`
     <h2 id="dlgTitle">${editing ? "Edit entry" : "Catalogue a Pokémon"}</h2>
@@ -1635,7 +1688,7 @@ function openEntryDialog(existing){
       <div class="pair">
         <div class="f">
           <label class="eyebrow" for="fOrigin">Origin game</label>
-          <select class="txt" id="fOrigin">${ORIGIN_GAMES.map(g => `<option${p.origin_game === g ? " selected" : ""}>${esc(g)}</option>`).join("")}</select>
+          <select class="txt" id="fOrigin">${originOptions(pOrigin).map(g => `<option${pOrigin === g ? " selected" : ""}>${esc(g)}</option>`).join("")}</select>
         </div>
         <div class="f">
           <label class="eyebrow" for="fTera">Tera type</label>
@@ -2333,7 +2386,7 @@ function mapV1(p){
     shiny: Boolean(p.shiny),
     mark: (p.mark && p.mark !== "None") ? String(p.mark).slice(0, 40) : "",
     ribbon: String(p.ribbon || "").slice(0, 64),
-    origin_game: String(p.originGame || "").slice(0, 40),
+    origin_game: canonOrigin(p.originGame).slice(0, 40),
     tera_type: String(p.teraType || "").slice(0, 20),
     ball: String(p.ball || "").slice(0, 40),
     level: parseLevel(p.level),
@@ -2356,7 +2409,7 @@ function mapV2(p){
     shiny: Boolean(p.shiny),
     mark: String(p.mark || "").slice(0, 40),
     ribbon: String(p.ribbon || "").slice(0, 64),
-    origin_game: String(p.origin_game || "").slice(0, 40),
+    origin_game: canonOrigin(p.origin_game).slice(0, 40),
     tera_type: String(p.tera_type || "").slice(0, 20),
     ball: String(p.ball || "").slice(0, 40),
     level: parseLevel(p.level),

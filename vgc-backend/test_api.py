@@ -181,7 +181,7 @@ def test_expired_refresh_token_rejected(client):
 # ─────────────────── collection ───────────────────
 
 MON = {"species": "Incineroar", "shiny": True, "mark": "Rare Mark",
-       "origin_game": "Scarlet", "tera_type": "Water", "ball": "Beast Ball",
+       "origin_game": "Scarlet / Violet", "tera_type": "Water", "ball": "Beast Ball",
        "level": 50, "dex_id": 727, "art": "https://example.com/i.png"}
 
 
@@ -410,3 +410,62 @@ def test_accounts_list_excludes_self(client):
     register(client, "misty", "Misty")
     names = [a["username"] for a in client.get("/accounts", headers=bearer(ash)).json()]
     assert names == ["misty"]
+
+
+# ─────────────────── origin-game pair merge migration ───────────────────
+
+def test_legacy_single_version_origins_fold_onto_the_pair(client):
+    """Rows written before the pairs merged must not be left unfilterable."""
+    import db
+    ash = register(client)
+    ids = {}
+    for version in ["Scarlet", "Violet", "Sword", "Let's Go Eevee", "HOME / transferred"]:
+        r = client.post("/pokemon", headers=bearer(ash), json={**MON, "species": "pikachu"})
+        ids[version] = r.json()["id"]
+        # Write the legacy label straight in, simulating a pre-merge record.
+        with db.connect() as conn:
+            conn.execute("UPDATE pokemon SET origin_game = ? WHERE id = ?",
+                         (version, ids[version]))
+
+    with db.connect() as conn:
+        assert db.merge_paired_origin_games(conn) == 5
+
+    got = {p["id"]: p["origin_game"] for p in client.get("/pokemon", headers=bearer(ash)).json()}
+    assert got[ids["Scarlet"]] == "Scarlet / Violet"
+    assert got[ids["Violet"]] == "Scarlet / Violet"
+    assert got[ids["Sword"]] == "Sword / Shield"
+    assert got[ids["Let's Go Eevee"]] == "Let's Go Pikachu / Eevee"
+    assert got[ids["HOME / transferred"]] == "HOME (transferred)"
+
+
+def test_merge_is_idempotent_and_leaves_other_values_alone(client):
+    import db
+    ash = register(client)
+    client.post("/pokemon", headers=bearer(ash), json={**MON, "origin_game": "Scarlet / Violet"})
+    client.post("/pokemon", headers=bearer(ash), json={**MON, "origin_game": "Legends: Arceus"})
+    # An unrecognised value must survive rather than being coerced into "Other".
+    client.post("/pokemon", headers=bearer(ash), json={**MON, "origin_game": "Emerald"})
+
+    with db.connect() as conn:
+        assert db.merge_paired_origin_games(conn) == 0  # nothing left to migrate
+
+    origins = sorted(p["origin_game"] for p in client.get("/pokemon", headers=bearer(ash)).json())
+    assert origins == ["Emerald", "Legends: Arceus", "Scarlet / Violet"]
+
+
+def test_every_merge_target_is_an_offered_option():
+    """Guards against a migration that writes a label the client can't display."""
+    import db
+    offered = {
+        "Scarlet / Violet", "Sword / Shield", "Brilliant Diamond / Shining Pearl",
+        "Legends: Arceus", "Legends: Z-A", "Sun / Moon", "Ultra Sun / Ultra Moon",
+        "Let's Go Pikachu / Eevee", "HOME (transferred)", "Other",
+    }
+    assert set(db.ORIGIN_GAME_MERGES.values()) <= offered
+    # And no legacy key collides with a combined label (which would loop).
+    assert not (set(db.ORIGIN_GAME_MERGES) & set(db.ORIGIN_GAME_MERGES.values()))
+
+
+def test_combined_labels_fit_the_column_limit():
+    import db
+    assert max(len(v) for v in db.ORIGIN_GAME_MERGES.values()) <= 40

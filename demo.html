@@ -895,11 +895,60 @@ const Vault = {
 const uid = (tag) => tag + "_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 
 /* ══════════════════════ reference data ══════════════════════ */
+/* Paired releases are one entry: a Pokémon's provenance is the release pair, and
+   splitting them just doubled the list without telling you anything extra. */
 const ORIGIN_GAMES = [
-  "Scarlet","Violet","Sword","Shield","Brilliant Diamond","Shining Pearl",
-  "Legends: Arceus","Legends: Z-A","Sun","Moon","Ultra Sun","Ultra Moon",
-  "Let's Go Pikachu","Let's Go Eevee","HOME / transferred","Other"
+  "Scarlet / Violet",
+  "Sword / Shield",
+  "Brilliant Diamond / Shining Pearl",
+  "Legends: Arceus",
+  "Legends: Z-A",
+  "Sun / Moon",
+  "Ultra Sun / Ultra Moon",
+  "Let's Go Pikachu / Eevee",
+  "HOME (transferred)",
+  "Other"
 ];
+
+/* Entries saved before the pairs were merged map onto the combined label, so they
+   stay filterable and still select the right option when edited. Unrecognised
+   values pass through untouched rather than being coerced and losing information. */
+const ORIGIN_ALIASES = {
+  "Scarlet": "Scarlet / Violet",
+  "Violet": "Scarlet / Violet",
+  "Sword": "Sword / Shield",
+  "Shield": "Sword / Shield",
+  "Brilliant Diamond": "Brilliant Diamond / Shining Pearl",
+  "Shining Pearl": "Brilliant Diamond / Shining Pearl",
+  "Sun": "Sun / Moon",
+  "Moon": "Sun / Moon",
+  "Ultra Sun": "Ultra Sun / Ultra Moon",
+  "Ultra Moon": "Ultra Sun / Ultra Moon",
+  "Let's Go Pikachu": "Let's Go Pikachu / Eevee",
+  "Let's Go Eevee": "Let's Go Pikachu / Eevee",
+  /* renamed so " / " means "release pair" everywhere and nothing else */
+  "HOME / transferred": "HOME (transferred)"
+};
+function canonOrigin(v){
+  const s = String(v ?? "").trim();
+  return ORIGIN_ALIASES[s] || s;
+}
+
+/* Options for an origin <select>: the canonical list, plus the record's own value
+   if it's something off-list, so opening the editor can never silently rewrite it. */
+function originOptions(current){
+  const c = String(current ?? "").trim();
+  return (!c || ORIGIN_GAMES.includes(c)) ? ORIGIN_GAMES : ORIGIN_GAMES.concat(c);
+}
+
+/* Filter options also cover any off-list value the collection actually holds,
+   otherwise those entries would be impossible to filter down to. */
+function originFilterOptions(roster){
+  const extra = [...new Set((roster || [])
+    .map(p => String(p.originGame ?? "").trim())
+    .filter(v => v && !ORIGIN_GAMES.includes(v)))].sort();
+  return ORIGIN_GAMES.concat(extra);
+}
 const MARKS = [
   "None","Rowdy Mark","Sturdy Mark","Rare Mark","Uncommon Mark","Alpha Mark",
   "Titan Mark","Jumbo Mark","Mini Mark","Gourmand Mark","Curious Mark",
@@ -984,6 +1033,14 @@ function loadBook(){
   const book = bookFor(app.trainerId);
   app.roster = book.roster;
   app.binders = book.binders;
+  /* No server here to migrate the store, so fold legacy single-version origins
+     onto their release pair on the way in, and persist if anything moved. */
+  let moved = 0;
+  app.roster.forEach(p => {
+    const c = canonOrigin(p.originGame);
+    if (c !== p.originGame){ p.originGame = c; moved++; }
+  });
+  if (moved) saveBook();
 }
 function saveBook(){
   Vault.writeJSON("book:" + app.trainerId, { roster: app.roster, binders: app.binders });
@@ -1291,7 +1348,7 @@ function renderCollection(stage){
       <label class="sr-only" for="originPick">Filter by origin game</label>
       <select class="txt" id="originPick">
         <option value="">Any origin</option>
-        ${ORIGIN_GAMES.map(g => `<option value="${esc(g)}"${app.filters.origin === g ? " selected" : ""}>${esc(g)}</option>`).join("")}
+        ${originFilterOptions(app.roster).map(g => `<option value="${esc(g)}"${app.filters.origin === g ? " selected" : ""}>${esc(g)}</option>`).join("")}
       </select>
       <label class="sr-only" for="markPick">Filter by mark</label>
       <select class="txt" id="markPick">
@@ -1462,6 +1519,9 @@ function openEntryDialog(existing){
     originGame: ORIGIN_GAMES[0], ball: "", nature: "", ability: "", teraType: "",
     level: "", ot: "", language: "", notes: ""
   };
+  /* alias first, so an entry saved as "Violet" opens on "Scarlet / Violet"
+     instead of falling through to the first option in the list */
+  const pOrigin = canonOrigin(p.originGame);
 
   openDialog(`
     <h2 id="dlgTitle">${editing ? "Edit entry" : "Catalogue a Pokémon"}</h2>
@@ -1499,7 +1559,7 @@ function openEntryDialog(existing){
       <div class="pair">
         <div class="f">
           <label class="eyebrow" for="fOrigin">Origin game</label>
-          <select class="txt" id="fOrigin">${ORIGIN_GAMES.map(g => `<option${p.originGame === g ? " selected" : ""}>${esc(g)}</option>`).join("")}</select>
+          <select class="txt" id="fOrigin">${originOptions(pOrigin).map(g => `<option${pOrigin === g ? " selected" : ""}>${esc(g)}</option>`).join("")}</select>
         </div>
         <div class="f">
           <label class="eyebrow" for="fTera">Tera type</label>
