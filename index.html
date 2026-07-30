@@ -297,6 +297,39 @@ ul{ margin: 0; padding: 0; }
 }
 .half li strong{ color: var(--ink); font-weight: 600; }
 
+/* ═══════════════ screenshots ═══════════════ */
+.shots{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 16px;
+  padding: 20px 24px 24px;
+  border-top: 1px solid var(--rule-soft);
+  list-style: none;
+}
+.shots figure{ margin: 0; display: flex; flex-direction: column; gap: 9px; }
+/* Uniform frames keep the grid tidy, but the fit is `contain`: cropping a
+   screenshot slices words off ("Incineroar" became "neroar" under `cover`).
+   Letterboxing against the frame is the lesser evil, and clicking opens full size. */
+.shot-link{
+  display: block;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  background: var(--sleeve-2);
+  box-shadow: var(--shadow-lo);
+  padding: 6px;
+}
+.shot-link:hover{ border-color: var(--accent); }
+.shot-link img{
+  width: 100%; height: 100%;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+}
+.shots figcaption{ font-size: 0.8125rem; color: var(--ink-2); line-height: 1.5; }
+.shots figcaption b{ color: var(--ink); font-weight: 600; display: block; }
+
 .notes{ padding: 20px 24px 24px; border-top: 1px solid var(--rule-soft); }
 .notes h4{ font-size: 0.9375rem; margin-bottom: 12px; }
 .notes ol{ list-style: none; counter-reset: n; display: flex; flex-direction: column; gap: 13px; }
@@ -523,6 +556,30 @@ footer a{ font-weight: 600; }
           </div>
         </div>
 
+        <ul class="shots">
+          <li><figure>
+            <a class="shot-link" href="assets/collection-grid.png">
+              <img src="assets/collection-grid.png" width="1052" height="1084" loading="lazy" decoding="async"
+                   alt="Collection grid with Incineroar and Miraidon as shiny entries. Each card shows a foil sleeve, the dex number, and tags for origin game, mark, ball and Tera type, above Edit and Remove buttons.">
+            </a>
+            <figcaption><b>The collection</b>Shiny entries get a foil sleeve. Every card carries its provenance — origin, mark, ball, Tera type — as text, never colour alone.</figcaption>
+          </figure></li>
+          <li><figure>
+            <a class="shot-link" href="assets/binders.png">
+              <img src="assets/binders.png" width="1052" height="1342" loading="lazy" decoding="async"
+                   alt="Binders tab listing two binders: 'Shiny restricted legends' stamped Tradeable, and 'Old team' stamped Private, each with an entry count.">
+            </a>
+            <figcaption><b>Binders</b>The tradeable stamp is the switch that decides whether other trainers can browse a binder and open a trade.</figcaption>
+          </figure></li>
+          <li><figure>
+            <a class="shot-link" href="assets/standalone-empty-state.png">
+              <img src="assets/standalone-empty-state.png" width="1060" height="1248" loading="lazy" decoding="async"
+                   alt="The standalone build on first run: a trainer switcher, Export and Import buttons, collection filters, and an empty state prompting you to catalogue a first Pokémon.">
+            </a>
+            <figcaption><b>The standalone build</b>First run, no account and no backend — the version the demo link opens.</figcaption>
+          </figure></li>
+        </ul>
+
         <div class="notes">
           <h4>Decisions worth explaining</h4>
           <ol>
@@ -562,15 +619,6 @@ footer a{ font-weight: 600; }
         </ul>
       </article>
 
-      <div class="todo">
-        <span class="flag">▲ Worth adding</span>
-        <p>
-          <strong>Screenshots.</strong> This page describes the interface but never shows
-          it. Two or three images — the collection grid, a binder, the trade thread — would
-          do more than any of the copy above. Drop them in an <code>assets/</code> folder
-          and add <code>&lt;img&gt;</code> tags to the project card.
-        </p>
-      </div>
     </div>
   </section>
 
